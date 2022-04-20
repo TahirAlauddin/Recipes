@@ -1,6 +1,8 @@
 from pathlib import Path
+from dotenv import load_dotenv
 import os
 
+load_dotenv()
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -9,7 +11,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-rsqabq)o&*jv(6%9f7wo37%9!0m3g6hl_a1-p0=56%7yl2@%pa'
+SECRET_KEY = os.getenv("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -32,7 +34,6 @@ INSTALLED_APPS = [
     # 3rd Party Libraries
     'allauth',
     'allauth.account',
-    'allauth.socialaccount',
 
     # Local Apps
     'recipes',
@@ -83,7 +84,6 @@ WSGI_APPLICATION = 'FindRecipes.wsgi.application'
 
 
 # Database
-# https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 
 DATABASES = {
     'default': {
@@ -94,7 +94,6 @@ DATABASES = {
 
 
 # Password validation
-# https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -113,26 +112,16 @@ AUTH_PASSWORD_VALIDATORS = [
 
 
 # Internationalization
-# https://docs.djangoproject.com/en/3.2/topics/i18n/
-
 LANGUAGE_CODE = 'en-us'
-
 TIME_ZONE = 'UTC'
-
 USE_I18N = True
-
 USE_L10N = True
-
 USE_TZ = True
 
 
 # Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/3.2/howto/static-files/
-
 STATIC_URL = '/static/'
-
 STATIC_ROOT = "staticfiles"
-
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR,"static"),
 ]
@@ -140,9 +129,9 @@ STATICFILES_DIRS = [
 
 AUTH_USER_MODEL = 'users.CustomUser'
 
+# Login/Logout Settings
 # LOGIN_REDIRECT_URL = ''
 LOGIN_URL = 'accounts/login'
-
 LOGOUT_REDIRECT_URL = 'accounts/login'
 LOGOUT_URL = 'accounts/logout'
 
@@ -162,6 +151,9 @@ ACCOUNT_FORMS = {
     'signup': 'authentication.forms.CustomSignupForm',
 }
 
+
+# Email Settings
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 
 # PRIMARY KEY FOR DJANGO DATABASE

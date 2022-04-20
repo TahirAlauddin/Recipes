@@ -1,0 +1,88 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://kit.fontawesome.com/1660f10c2d.js" crossorigin="anonymous"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Covered+By+Your+Grace&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet"><link rel="stylesheet" href="css/owl.carousel.min.css">
+    <link rel="stylesheet" href="css/owl.theme.default.min.css">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <title>Create Account</title>
+</head>
+<body>
+
+    <nav class="navbar nav-top navbar-expand-lg">
+        <div class="container-fluid">
+            <a class="navbar-brand">
+                <i class="fa fa-cutlery mx-5" aria-hidden="true"></i>
+            </a>
+            <form class="d-flex mx-auto">
+                <input class="form" type="search" placeholder="Search" aria-label="Search">
+                <a class="btn" type="submit">
+                    <i class="fa fa-search"></i>
+                </a>
+            </form>
+            <a href="#" class="btn cart me-5">
+                <i class="fa fa-shopping-cart mx-2"></i>
+                My Cart
+            </a>
+        </div>
+    </nav>
+
+    <nav class="navbar nav-bottom navbar-expand-lg">
+        <div class="container-fluid">
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
+                <div class="navbar-nav">
+                    <a class="nav-link mx-4" href="index.html">Home</a>
+                    <a class="nav-link mx-4" href="#">Features</a>
+                    <a class="nav-link mx-4" href="#">Contact</a>
+                    <a class="nav-link mx-4" href="#">Newsletter </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <section class="signup">
+        <div class="container-fluid py-5">
+            <div class="row my-5 py-5">
+                <div class="col-4 form">
+
+                  <form id="signup_form" method="post" action="{% url 'account_signup' %}" class="py-5">
+                      {% csrf_token %}
+                        <h1 class="my-5">
+                            Signup
+                        </h1>
+                        <input type="email" name="email" placeholder="E-mail address" autocomplete="email" required id="id_email">
+                        <br>
+                        <input type="text" name="username" placeholder="Username" autocomplete="username" minlength="1" maxlength="255" required id="id_username">
+                        <br>
+                        <input type="text" placeholder="yyyy-mm-dd" name="birth_date" required id="id_birth_date">
+                        <br>
+                        <input type="password" name="password1" placeholder="Password" autocomplete="new-password" required id="id_password1">
+                        <br>
+                        <input type="submit" class="btn signup-btn mt-5" value="Sign Up">
+                    </form>
+
+                    <p>
+                        Already have an Account?
+                        <a href="{{ login_url }}" style="text-decoration: none; color: #FF6F61;">
+                            Login
+                        </a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+
+</body>
+</html>
