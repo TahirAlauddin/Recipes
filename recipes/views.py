@@ -1,5 +1,5 @@
 from django.shortcuts import render
-
+from .models import *
 
 def home(request):
     return render(request, "recipes/list_recipes.html")
@@ -18,28 +18,29 @@ def create_recipe(request):
         difficulty = form.get('difficulty')
         cost = form.get('cost')
         number_of_dishes = form.get('dishes')
+        category = form.get('category')
 
         ingredients_quantity = form.getlist('ingredients-quantity')
         ingredients_name = form.getlist('ingredients-name')
         utensils_quantity = form.getlist('utensils-quantity')
         utensils_name = form.getlist('utensils-name')
 
+        recipe = Recipe(title=title, description=description, cost=cost,
+                        difficulty=difficulty, preparation_time=prep_time)
         for image in images:
-            pass
+            recipeImage = RecipeImage(image=image, recipe=Recipe)
 
-        for ingredient_quantity in ingredients_quantity:
-            pass
 
-        for ingredient_name in ingredients_name:
-            pass
+        for ingredients_name, ingredient_quantity in zip(ingredients_name, ingredients_quantity):
+            ingredientItem = IngredientItem(name=ingredient_name, quantity=ingredient_quantity,
+                                            recipe=Recipe)
 
-        for utensil_name in utensils_name:
-            pass
 
-        for utensil_quantity in utensils_quantity:
-            pass
+        for utensil_name, utensil_item in zip(utensils_name, utensils_quantity):
+            utensilItem = UtensilItem(name=utensil_name, quantity=utensil_quantity,
+                                            recipe=Recipe)
 
-        pass
+
 
     return render(request, "recipes/create_recipe.html")
 
