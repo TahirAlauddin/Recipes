@@ -1,11 +1,11 @@
 from django.shortcuts import render
 from .models import *
 
-def home(request):
+def view_home(request):
     return render(request, "recipes/list_recipes.html")
 
 
-def create_recipe(request):
+def view_create_recipe(request):
     if request.method == 'POST':
         # Create Recipe
         # for filename, file in request.FILES.iteritems():
@@ -27,20 +27,50 @@ def create_recipe(request):
 
         recipe = Recipe(title=title, description=description, cost=cost,
                         difficulty=difficulty, preparation_time=prep_time)
+        recipe.save()
+
         for image in images:
             recipeImage = RecipeImage(image=image, recipe=Recipe)
+            recipeImage.save()
 
 
         for ingredients_name, ingredient_quantity in zip(ingredients_name, ingredients_quantity):
             ingredientItem = IngredientItem(name=ingredient_name, quantity=ingredient_quantity,
                                             recipe=Recipe)
-
+            ingredientItem.save()
 
         for utensil_name, utensil_item in zip(utensils_name, utensils_quantity):
             utensilItem = UtensilItem(name=utensil_name, quantity=utensil_quantity,
                                             recipe=Recipe)
-
-
+            utensilItema.save()
 
     return render(request, "recipes/create_recipe.html")
+
+
+def view_create_ingredient(request):
+    if request.method == "POST":
+        form = request.POST
+        name = form.get('name')
+        unit = form.get('unit')
+        image = form.FILES.get('image')
+    return render(request, "recipes/create_ingredients.html")
+
+
+
+def view_create_utensil(request):
+    if request.method == "POST":
+        form = request.POST
+        name = form.get('name')
+        image = form.FILES.get('image')
+    return render(request, "recipes/create_utensils.html")
+
+
+
+def view_recipe_detail(request, slug):
+    recipe = Recipe.objects.get(slug=slug)
+    ingredients = recipe.ingredients.all()
+    utensils = recipe.utensils.all()
+    print(utensils)
+    context = {'recipe': recipe, 'ingredientItems': ingredients, 'utensilItems': utensils} 
+    return render(request, "recipes/recipe_detail.html", context=context)
 

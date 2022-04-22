@@ -131,7 +131,7 @@ STATICFILES_DIRS = [
 AUTH_USER_MODEL = 'users.CustomUser'
 
 # Login/Logout Settings
-# LOGIN_REDIRECT_URL = ''
+LOGIN_REDIRECT_URL = 'recipes/'
 LOGIN_URL = 'accounts/login'
 LOGOUT_REDIRECT_URL = 'accounts/login'
 LOGOUT_URL = 'accounts/logout'
@@ -141,7 +141,7 @@ DATE_INPUT_FORMATS = ['%d-%m-%Y']
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 MEDIA_URL = '/media/'
-ADMIN_MEDIA_PREFIX = '/media/'
+# ADMIN_MEDIA_PREFIX = '/media/'
 
 # DJANGO-AUTH SETTINGS
 ACCOUNT_ADAPTER = 'authentication.adapter.CustomUserAdapter'

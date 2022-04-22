@@ -1,18 +1,23 @@
-from django.core.management.base import BaseCommand, CommandError
-import requests
 from requests.exceptions import ConnectionError
 from bs4 import BeautifulSoup
 from threading import Thread
 from dataclasses import dataclass
-from typing import List
-from pickle import load, dump
+from typing import List, Any
+from pickle import dump
+from datetime import time
+from django.core.management import BaseCommand
+import requests
 import os
 
 url = 'https://marmiton.org'
-DEEPNESS = 4
-SAVE_TO_PICKEL = False
-PRINT_RESULTS = False
 
+SAVE_TO_PICKEL = True
+PRINT_RESULTS = False
+DEEPNESS = 200
+
+
+scrapped = 0
+skipped = 0
 titles = []
 threads = []
 urls = []
@@ -24,6 +29,7 @@ ingredients_names = []
 ingredient_objects = []
 utensil_objects = []
 recipes_list = []
+
 
 
 @dataclass
@@ -42,60 +48,124 @@ class Utensil:
 @dataclass
 class Recipe:
     title: str
-    time: str
+    prep_time: Any
+    rest_time: Any
+    cook_time: Any
     difficulty: str
     cost: str
     description: str
     ingredients: List[Ingredient]
     utensils: List[Utensil]
 
+def str_to_time(prep_time, rest_time, cook_time):
 
-def recursive_parser(response, deepness):
+    prep_time = prep_time.getText()
+    rest_time = rest_time.getText()
+    cook_time = cook_time.getText()
+
+    if prep_time == '-':
+        prep_time = time()
+    else:
+        prep_time_list = prep_time.split()
+        num = prep_time_list[::2]
+        unit = prep_time_list[1::2]
+
+        minute = 0
+        hour = 0
+        for u, n in zip(unit, num):
+            if u == 'hour':
+                hour = n
+            elif u == 'min':
+                minute = n
+
+        prep_time = time(hour=int(hour), minute=int(minute))
+    
+    if cook_time == '-':
+        cook_time = time()
+    else:
+        cook_time_list = cook_time.split()
+        num = cook_time_list[::2]
+        unit = cook_time_list[1::2]
+
+        minute = 0
+        hour = 0
+        for u, n in zip(unit, num):
+            if u == 'hour':
+                hour = n
+            elif u == 'min':
+                minute = n
+
+        cook_time = time(hour=int(hour), minute=int(minute))
+
+    if rest_time == '-':
+        rest_time = time()
+    else:
+        rest_time_list = rest_time.split()
+        num = rest_time_list[::2]
+        unit = rest_time_list[1::2]
+
+        minute = 0
+        hour = 0
+        for u, n in zip(unit, num):
+            if u == 'hour':
+                hour = n
+            elif u == 'min':
+                minute = n
+
+        rest_time = time(hour=int(hour), minute=int(minute))
+        
+    return prep_time, rest_time, cook_time
+
+
+
+def scrape_marmiton(url, deepness):
+    global skipped, scrapped
+    scrape = True
+
     if deepness >= DEEPNESS:
         return
+
+    response = requests.get(url)
     soup = BeautifulSoup(response.text, features='lxml')
+
+    # Call another recursive function as soon the response is get
+    *_, random_recipe = soup.findAll('a', attrs={"class": "MRTN__sc-gkm9mr-3 jXEnlf"})
+    href = random_recipe['href']
+
+    if not href.startswith('http'):
+        href = 'https://marmiton.org' + href 
+    
+    thread = Thread(target=scrape_marmiton, args=(href, deepness+1))
+    thread.start()
+    threads.append(thread)
+
+
     time,difficulty,cost = soup.findAll('p', attrs={'class': "RCP__sc-1qnswg8-1 iDYkZP"})
 
     description_and_steps = soup.find('ul', attrs={'class': None, 'id': None}).getText()
-    time = time.getText()
+    time = time.getText(strip=True)
+    total_time = time.split('\xa0')
+
+    times = soup.findAll('span', attrs={'class': "SHRD__sc-10plygc-0 bzAHrL"})
+    
+    prep_time, rest_time, cook_time = times[1:]
+
+
+    # converting string time to time object python
+    prep_time, rest_time, cook_time = str_to_time(prep_time, rest_time, cook_time)
+
     difficulty = difficulty.getText()
     cost = cost.getText()
     title_recipe = soup.find('title').getText()
 
-    # Recipe with same title already scrapped
-    if title_recipe in titles:
-        return
 
+    ingredients_for_recipes = soup.findAll('span', attrs={"class": "SHRD__sc-10plygc-0 epviYI"})    
+    ingredients_name_soup = soup.findAll('span', attrs={'class': "SHRD__sc-10plygc-0 kWuxfa"})
+    utensils_soup = soup.findAll('div', attrs={"class": "RCP__sc-1641h7i-2 jUeCVL"})
 
-    try:
-        ingredients_for_recipes = soup.findAll('span', attrs={"class": "SHRD__sc-10plygc-0 epviYI"})
-        
-
-        ingredients_name_soup = soup.findAll('span', attrs={'class': "SHRD__sc-10plygc-0 kWuxfa"})
-        
-        utensils_soup = soup.findAll('div', attrs={"class": "RCP__sc-1641h7i-2 jUeCVL"})
-
-    except AttributeError:
-        return
 
     recipe_utensil_names = []
     recipe_ingredient_names = []
-
-
-    # Adding utensils to the database if not exists
-    for utensil in utensils_soup:
-        # Utensils names 
-        utensil_text = utensil.getText(strip=True).strip()
-        utensil_name = "".join([chr for chr in utensil_text if chr.isalpha()])
-        quantity = "".join([chr for chr in utensil_text if chr.isdigit()])
-        # utensil_name = utensil_name.replace('\n', ' ')
-        # utensil_name = utensil_name.replace('  ', ' ')
-
-        recipe_utensil_names.append(utensil_name)
-        if utensil_name not in utensil_names:
-            utensil_object = Utensil(name=utensil_name, quantity=quantity)
-            utensil_objects.append(utensil_object)
-            utensil_names.append(utensil_name)
 
 
     # Adding ingredients to database if not exists
@@ -104,14 +174,40 @@ def recursive_parser(response, deepness):
         ingredient_name = ingredient_name.getText(strip=True).strip()
         qty_unit_text = ingredient_quantity_and_unit.getText(strip=True).strip()
 
-        quantity = ''.join([chr for chr in qty_unit_text if not chr.isalpha()])
+
+        quantity = ''.join([chr for chr in qty_unit_text if chr.isdigit() or chr == '/'])
         unit = ''.join([chr for chr in qty_unit_text if chr.isalpha()])
 
         recipe_ingredient_names.append(ingredient_name)
+
+        if len(ingredient_name) > 20:
+            skipped += 1
+            scrape = False
+
+        for i in ingredient_name:
+            if i.isdigit():
+                skipped += 1
+                scrape = False
+                break
+
         if ingredient_name not in ingredients_names:
             ingredient_object = Ingredient(name=ingredient_name, unit=unit, quantity=quantity)
             ingredient_objects.append(ingredient_object)
+            ingredients_names.append(ingredient_name)
 
+
+    # Adding utensils to the database if not exists
+    for utensil in utensils_soup:
+        # Utensils names 
+        utensil_text = " ".join(utensil.getText().strip().split('\xa0'))
+        utensil_name = "".join([chr for chr in utensil_text if chr.isalpha()])
+        quantity = "".join([chr for chr in utensil_text if chr.isdigit()])
+
+        recipe_utensil_names.append(utensil_name)
+        if utensil_name not in utensil_names:
+            utensil_object = Utensil(name=utensil_name, quantity=quantity)
+            utensil_objects.append(utensil_object)
+            utensil_names.append(utensil_name)
 
     recipe_ingredients = []
     recipe_utensils = []
@@ -126,73 +222,49 @@ def recursive_parser(response, deepness):
             recipe_utensils.append(utensil_object)
 
 
-    # Adding recipe to the database
-    recipe = Recipe(title=title_recipe, time=time, difficulty=difficulty,
-                    cost=cost, description=description_and_steps, 
-                    ingredients=recipe_ingredients, utensils=recipe_utensils)
+    if difficulty.lower() == "très facile":
+        difficulty = 'v'
+    elif difficulty.lower() == "facile":
+        difficulty = 'e'
+    elif difficulty.lower() == "niveau moyen":
+        difficulty = 'm'
+    elif difficulty.lower() == "difficile":
+        difficulty = 'h'
 
-    recipes_list.append(recipe)
-    titles.append(title_recipe)
-    
-    print("A Recipe added")
+    if cost.lower() == 'bon marché':
+        cost = 'l'
+    elif cost.lower() in ['coût moyen', 'moyen']:
+        cost = 'm'
+    elif cost.lower() == 'assez cher':
+        cost = 'h'
 
-    recipes = soup.find('ul', attrs={"class": "RCP__sc-1cs7kbv-3 eTPIie"})
+    if scrape:
+        # Adding recipe to the database
+        recipe = Recipe(title=title_recipe, prep_time=prep_time, cook_time=cook_time, 
+                        rest_time=rest_time, difficulty=difficulty,
+                        cost=cost, description=description_and_steps, 
+                        ingredients=recipe_ingredients, utensils=recipe_utensils)
 
-
-    for recipe in recipes.findChildren('a'):
-        try:
-            href = recipe['href']
-
-            if not href.startswith('http'):
-                href = 'https://marmiton.org' + href 
-            
-            # Recipe with same Url already scrapped
-            if href in urls:
-                return
-
-            urls.append(href)
-            try:
-                response = requests.get(href)
-            except ConnectionError:
-                print("No Response from", href)
-                return
-            thread = Thread(target=recursive_parser, args=(response, deepness+1))
-            thread.start()
-            threads.append(thread)
-
-        except TypeError:
-            pass
+        recipes_list.append(recipe)
+        titles.append(title_recipe)
+        scrapped += 1
+        print("A Recipe added", scrapped)
 
 
-def scrape_recipes():
-    for i in range(5):
-        response = requests.get(url)
+def print_results():
+    print('\n\n\n\n')
+    for ingredient_object in ingredient_objects:
+        print(ingredient_object)
 
-        soup = BeautifulSoup(response.text, features='lxml')
+    print("\n\n")
 
-        recipes = soup.findAll('div', attrs={"class":"m_contenu_bloc"})
+    for utensil_object in utensil_objects:
+        print(utensil_object)
 
-        for recipe in recipes:
-            result = recipe.findParent('a')
-            try:
-                href = result['href']
-                if href.endswith('html'):
-                    continue
+    print("\n\n")
 
-                if not href.startswith('http'):
-                    href = url + href 
-
-                response = requests.get(href)
-                thread = Thread(target=recursive_parser, args=(response, 1))
-                thread.start()
-                threads.append(thread)
-
-            except TypeError:
-                pass
-
-
-    for thread in threads:
-        thread.join()
+    for recipe in recipes_list:
+        print(recipe)
 
 
 class Command(BaseCommand):
@@ -200,12 +272,12 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         
-        scrape_recipes()
+        main()
         ingredients = []
         utensils = []
 
         for i in ingredient_objects:
-            name = i.name
+            name = i.name.lower()
             if name not in ingredients:
                 ingredients.append(name)
 
@@ -216,10 +288,49 @@ class Command(BaseCommand):
 
         if not os.path.exists('pickle'):
             os.mkdir('pickle')
+
+        for ingredient in ingredients:
+            print(ingredient)
+
+        # Save to pickel files
         dump(recipes_list, open("pickle/recipes.pkl", 'wb'))
         dump(ingredients, open("pickle/ingredients.pkl", 'wb'))
         dump(utensils, open("pickle/utensils.pkl", 'wb'))
-        # dump(utensil_objects, open("pickle/utensilsItems.pkl", 'wb'))
-        # dump(ingredient_objects, open("pickle/ingredientsItems.pkl", 'wb'))
 
         self.stdout.write(self.style.SUCCESS("Recipes scrapped successfully."))
+
+
+# Program Start from here
+def main():
+    response = requests.get(url)
+    soup = BeautifulSoup(response.text, features='lxml')
+
+    recipes = soup.findAll('div', attrs={"class":"m_contenu_bloc"})
+
+    for recipe in recipes:
+        result = recipe.findParent('a')
+        try:
+            href = result['href']
+            if href.endswith('html'):
+                continue
+
+            if not href.startswith('http'):
+                href = 'https://marmiton.org' + href 
+
+            thread = Thread(target=scrape_marmiton, args=(href,0))
+            thread.start()
+            threads.append(thread)
+
+        except TypeError:
+            pass
+
+
+    for thread in threads:
+        thread.join()
+
+    print(skipped)
+    print("Scrapped", scrapped)
+
+
+if __name__ == '__main__':
+    main()

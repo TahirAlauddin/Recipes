@@ -36,11 +36,11 @@ class Category(models.Model):
 class Review(models.Model):
     """
     Represents a user review, which includes free text
-    :reviewed_recipe: Recipe, which is reviewed.
-    :user: User, which posted the rating.
-    :content (optional): Running text.
-    :creation_date: The date and time, this review was created.
-    :rating: The Rating, which a user has given to the review.
+    - reviewed_recipe: Recipe, which is reviewed.
+    - user: User, which posted the rating.
+    - content (optional): Running text.
+    - creation_date: The date and time, this review was created.
+    - rating: The Rating, which a user has given to the review.
         i.e. 5, 4, 3, 2, 1
     """
     reviewed_recipe = models.ForeignKey(to="recipes.Recipe", on_delete=models.CASCADE)

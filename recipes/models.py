@@ -3,6 +3,7 @@ from django.utils.translation import gettext_lazy as _
 from django.utils.text import slugify
 from miscellenous.models import Category
 from django.db.utils import IntegrityError
+from datetime import time, timedelta
 
 UNITS = [
     # Volume
@@ -33,10 +34,12 @@ UNITS = [
 
 
 DIFFICULTY_CHOICES = [
+    ('v', 'Very Easy'),
     ('e', 'Easy'),
     ('m', 'Medium'),
     ('h', 'Hard'),
 ]
+
 COST_CHOICES =  [
     ('l', 'Low'),
     ('m', 'Medium'),
@@ -79,17 +82,24 @@ class Ingredient(models.Model):
     Ingredient.
     - name: The name of the Ingredient i.e. Tomato, Water etc.
     - unit: The unit of the Ingredient i.e. Gram (g), Litre (l) etc.
-
+    - approved: Whether the Ingredient is approved or not
     """
     name = models.CharField(max_length=120, 
+                            unique=True,
                             help_text="Maximum 120 characters",
                             )
     image = models.ImageField(upload_to='ingredient_items',
                                     default='default_ingredient.jpg')
+    approved = models.BooleanField(null=False, default=False)
+
     # unit = models.ForeignKey(Unit, null=True, blank=True, on_delete=models.PROTECT)
     
     def __str__(self):
         """ String Representation of the object of Ingredient """
+        return self.name
+
+    @property
+    def name2(self):
         return self.name
 
     class Meta:
@@ -112,6 +122,7 @@ class Utensil(models.Model):
     - name: The name of the Utensil i.e. Plates, Spoon etc.
     """
     name = models.CharField(max_length=120, 
+                            unique=True,
                             help_text="Maximum 120 characters",
                             )
     image = models.ImageField(upload_to='utensil_items',
@@ -154,7 +165,7 @@ class IngredientItem(models.Model):
 
     def __str__(self):
         """ String representation of UtensilItem """
-        return str(self.ingredient) + f"({self.quantity} {self.ingredient.unit})"
+        return str(self.ingredient) + f"({self.quantity} {self.unit})"
     
 
 class UtensilItem(models.Model):
@@ -176,7 +187,7 @@ class UtensilItem(models.Model):
 
     def __str__(self):
         """ String representation of UtensilItem """
-        if self.quantity == 1:
+        if self.quantity == '1':
             return f"{self.quantity} {self.utensil}" 
         # Add an s at the end of it is plural
         return f"{self.quantity} {self.utensil}s" 
@@ -189,46 +200,77 @@ class Recipe(models.Model):
     - title: Unique title of the Recipe i.e. Chinese Rice, Italian Pizza etc.
     - description: Free Text/Description or steps of making a recipe
     - slug: A unique url/slug of the Recipe i.e. chinese-rice-recipe etc.
-    - preparation_time: The time it takes to make a recipe i.e. 2h
+    - preparation_time: The time it takes to make a recipe i.e. 10 min
+    - cooking_time: The time it takes to cook the recipe
+    - rest_time: The time it takes after cooking
     - difficulty: How much difficult it is to make the recipe i.e Easy, Medium
     - cost: The cost category which the Recipe belongs to i.e. Low, High 
+    - approved: Whether the recipe is approved or not 
     """
     title = models.CharField(unique=True, 
                             max_length=120)
     description = models.TextField(blank=True)
     slug = models.SlugField(unique=True, max_length=120,
                                     null=False, blank=False)
-    preparation_time = models.CharField(max_length=100, blank=True,)
-    difficulty = models.CharField(max_length=1, 
-                                )
-    cost = models.CharField(max_length=1,)
+    
+    preparation_time = models.TimeField(default=time)
+    cooking_time = models.TimeField(default=time)
+    rest_time = models.TimeField(default=time)
+
+    difficulty = models.CharField(max_length=1, choices=DIFFICULTY_CHOICES)
+    cost = models.CharField(max_length=1, choices=COST_CHOICES)
     category = models.ForeignKey(to=Category, on_delete=models.SET_NULL,
                                 null=True)
-
+    approved = models.BooleanField(null=False, default=False)
 
     def __str__(self):
         """ String representation of the Recipe class"""
         return self.title
 
+
+    def get_preparation_time(self):
+        xt = timedelta(self.preparation_time)
+        yt = timedelta(self.cooking_time)
+        zt = timedelta(self.rest_time)
+
+        nt = xt + yt + zt
+
+        hours = nt.seconds // 3600
+        rest = nt.seconds % 3600
+        minutes = rest // 60
+        seconds = rest % 60
+
+        full_preparation_time = time(hour=hours, minute=minutes, second=seconds)
+
+        return full_preparation_time
+
+
     def save(self, *args, **kwargs):
         """ Overriding save method of models.Model to automatically 
         slugify each recipe using its title """
+        ingredients = kwargs.pop('ingr')
+        utensils = kwargs.pop('utns')
         try:
             self.slug = slugify(self.title)
             super(Recipe, self).save(*args, **kwargs)
+
+            for ingredient in ingredients:
+                ingredientItem = IngredientItem(quantity=ingredient.quantity, unit=ingredient.unit,
+                                            ingredient=Ingredient.objects.filter(name=ingredient.name).first(),
+                                            recipe=self)
+                ingredientItem.save()
+
+
+            for utensil in utensils:
+                utensilItem = UtensilItem(quantity=utensil.quantity, 
+                                            utensil=Utensil.objects.get(name=utensil.name),
+                                            recipe=self)
+
         except IntegrityError:
-            count = 2
-            while True:
-                try:
-                    self.slug = self.slug + '-' + str(count)
-                    super(Recipe, self).save(*args, **kwargs)
-                    break
-                except IntegrityError:
-                    count += 1
+            pass
+           
 
     class Meta:
         ordering = ['title']
         verbose_name = _('Recipe')
         verbose_name_plural = _('Recipes')
-
-

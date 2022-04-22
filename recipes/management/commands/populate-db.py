@@ -11,35 +11,25 @@ class Command(BaseCommand):
         utensils = load(open("pickle/utensils.pkl", 'rb'))
         ingredients = load(open("pickle/ingredients.pkl", 'rb'))
         
-        """Commented out because already saved to database, it will cause integrity error"""
-        # for ingredient in ingredients:
-        #     ingredient = Ingredient(name=ingredient)
-        #     ingredient.save()
+        print("Populating ingredients") 
+        ingredient_objects = [Ingredient(name=ingredient) for ingredient in ingredients]
+        Ingredient.objects.bulk_create(ingredient_objects)
+        print("Ingredients populated successfully")
 
-        # for utensil in utensils:
-        #     utensil = Utensil(name=utensil)
-        #     utensil.save()
-
+        print("Populating utensils") 
+        utensil_objects = [Utensil(name=utensil) for utensil in utensils]
+        Utensil.objects.bulk_create(utensil_objects)
+        print("Utensils populated successfully")
+        
         for recipe in recipes:
             recipe_obj = Recipe(title=recipe.title, description=recipe.description,
                         cost=recipe.cost, difficulty=recipe.difficulty,
-                        preparation_time=recipe.time)
+                        preparation_time=recipe.prep_time, cooking_time=recipe.cook_time,
+                        rest_time=recipe.rest_time)
 
-            recipe_obj.save()
+            recipe_obj.save(ingr=recipe.ingredients, utns=recipe.utensils)
 
-            for ingredient in recipe.ingredients:
-                ingredientItem = IngredientItem(quantity=ingredient.quantity, unit=ingredient.unit,
-                                            ingredient=Ingredient.objects.get(name=ingredient.name),
-                                            recipe=recipe_obj)
-                ingredientItem.save()
-
-
-            for utensil in recipe.utensils:
-                utensilItem = UtensilItem(quantity=utensil.quantity, 
-                                            utensil=Utensil.objects.get(name=utensil.name),
-                                            recipe=recipe_obj)
-
-                utensilItem.save()
+            print(f"{recipe_obj} saved")
 
 
         self.stdout.write(self.style.SUCCESS("Database populated successfully."))
