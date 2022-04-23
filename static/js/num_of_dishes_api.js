@@ -1,51 +1,3 @@
-{% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Detail</title>
-</head>
-<body>
-    <h1>{{recipe}}</h1>
-
-    {{recipe.title}}
-    
-    
-    <h1>Num of dishes</h1>
-
-    <button id="add" value=1 ><strong>+</strong></button>
-    <button id="subtract" value=1 ><strong>-</strong></button>
-
-    {% for ingItem in ingredientItems %}
-    <div id='ingredient-{{forloop.counter0}}'> 
-            <span class='ing-name'>
-                {{ingItem.ingredient.name}}
-            </span>
-            <span class='ing-quantity'>
-                {{ingItem.quantity}}
-            </span>
-    </div> 
-    
-    {% endfor %}
-
-    <h1>Utensils</h1>
-
-    {% for utensItem in utensilItems %}
-    <div>
-    <span>
-        {{utensItem.utensil.name}}
-    </span>
-    <span>
-        {{utensItem.utensil.quantity}}
-    </span>
-    
-</div>
-
-    {% endfor %}
-    
-    <script>
 document.getElementById('add').addEventListener('click', () => {
     change_ingredients_quantity('u')
 })
@@ -81,7 +33,3 @@ function change_ingredients_quantity(up_or_down) {
         .catch(error => console.log(error))
 }
 
-    </script>
-
-</body>
-</html>

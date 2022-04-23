@@ -61,7 +61,8 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     gender = models.CharField(max_length=1, choices=GENDER_CHOICE, null=True, blank=True)
     # Is moderator
     is_staff = models.BooleanField(default=False) 
-    is_active = models.BooleanField(default=False)
+    is_active = models.BooleanField(default=True)
+    is_confirmed = models.BooleanField(default=False)
 
     objects = CustomUserManager()
     
@@ -72,10 +73,20 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     def __str__(self) -> str:
         return str(self.username)
 
+    @property
+    def profile_picture(self):
+        return self.profile.image
+
+    class Meta:
+        verbose_name = 'User'
+        verbose_name_plural = 'Users'
+
 
 class Profile(models.Model):
-    user = models.OneToOneField(CustomUser, on_delete=models.CASCADE)
-    image = models.ImageField(default='default.png', upload_to='profile_pics')
+    user = models.OneToOneField(CustomUser, on_delete=models.CASCADE,
+                            related_name='profile')
+    image = models.ImageField(default='profile_pics/default.jpg',
+                            upload_to='profile_pics')
 
     def __str__(self):
         return f'{self.user.username} Profile'

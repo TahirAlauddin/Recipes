@@ -1,9 +1,11 @@
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django.utils.text import slugify
+from django.conf import settings
 from miscellenous.models import Category
 from django.db.utils import IntegrityError
 from datetime import time, timedelta
+import os
 
 UNITS = [
     # Volume
@@ -57,7 +59,7 @@ class RecipeImage(models.Model):
     - recipe: The Recipe the image belongs to
 
     """
-    image = models.ImageField(upload_to='images')
+    image = models.ImageField(upload_to='recipe_images')
     recipe = models.ForeignKey("Recipe", related_name='recipe_images',
                                 on_delete=models.CASCADE, null=True)
 
@@ -81,7 +83,6 @@ class Ingredient(models.Model):
     to a single Recipe and also many Recipes pointing to same
     Ingredient.
     - name: The name of the Ingredient i.e. Tomato, Water etc.
-    - unit: The unit of the Ingredient i.e. Gram (g), Litre (l) etc.
     - approved: Whether the Ingredient is approved or not
     """
     name = models.CharField(max_length=120, 
@@ -92,14 +93,9 @@ class Ingredient(models.Model):
                                     default='default_ingredient.jpg')
     approved = models.BooleanField(null=False, default=False)
 
-    # unit = models.ForeignKey(Unit, null=True, blank=True, on_delete=models.PROTECT)
     
     def __str__(self):
         """ String Representation of the object of Ingredient """
-        return self.name
-
-    @property
-    def name2(self):
         return self.name
 
     class Meta:
@@ -149,7 +145,8 @@ class IngredientItem(models.Model):
         There is One to Many relationship between Ingredient Item and Recipe
     - title: The name of the Ingredient i.e. Milk, Butter etc.
     - quantity: The quantity of the Ingredient 
-    - utensil: The Ingredient related to it
+    - ingredient: The Ingredient related to it
+    - unit: The unit of the Ingredient i.e. Gram (g), Litre (l) etc.
     - recipe: The Recipe to which IngredientItem belongs to
     """
     quantity = models.CharField(max_length=10)
@@ -164,12 +161,12 @@ class IngredientItem(models.Model):
                             related_name='ingredients')
 
     def __str__(self):
-        """ String representation of UtensilItem """
+        """ String representation of IngredientItem """
         return str(self.ingredient) + f"({self.quantity} {self.unit})"
     
 
 class UtensilItem(models.Model):
-    """"
+    """
     It is a Utensil item which is used for relating Utensil with Recipe
         There is One to Many relationship between Utensil Item and Utensil
         There is One to Many relationship between Utensil Item and Recipe
@@ -206,6 +203,7 @@ class Recipe(models.Model):
     - difficulty: How much difficult it is to make the recipe i.e Easy, Medium
     - cost: The cost category which the Recipe belongs to i.e. Low, High 
     - approved: Whether the recipe is approved or not 
+    - num_of_dishes: Initial number of dishes
     """
     title = models.CharField(unique=True, 
                             max_length=120)
@@ -220,55 +218,99 @@ class Recipe(models.Model):
     difficulty = models.CharField(max_length=1, choices=DIFFICULTY_CHOICES)
     cost = models.CharField(max_length=1, choices=COST_CHOICES)
     category = models.ForeignKey(to=Category, on_delete=models.SET_NULL,
-                                null=True)
+                                null=True, related_name='recipes')
+    num_of_dishes = models.IntegerField()
     approved = models.BooleanField(null=False, default=False)
 
     def __str__(self):
         """ String representation of the Recipe class"""
         return self.title
 
+    @property
+    def total_preparation_time(self):
+        """ Calculates the sum of preparation time, cooking time and rest_time """
 
-    def get_preparation_time(self):
-        xt = timedelta(self.preparation_time)
-        yt = timedelta(self.cooking_time)
-        zt = timedelta(self.rest_time)
+        preparation_timedelta = timedelta(hours=self.preparation_time.hour,
+                                    minutes=self.preparation_time.minute)
+        rest_timedelta = timedelta(hours=self.rest_time.hour, 
+                                    minutes=self.rest_time.minute)
+        cooking_timedelta = timedelta(hours=self.cooking_time.hour, 
+                                    minutes=self.cooking_time.minute)
 
-        nt = xt + yt + zt
-
-        hours = nt.seconds // 3600
-        rest = nt.seconds % 3600
+        total_timedelta = preparation_timedelta + rest_timedelta + cooking_timedelta
+        
+        hours = total_timedelta.seconds // 3600
+        rest = total_timedelta.seconds % 3600
         minutes = rest // 60
-        seconds = rest % 60
 
-        full_preparation_time = time(hour=hours, minute=minutes, second=seconds)
+        full_preparation_time = time(hour=hours, minute=minutes)
 
         return full_preparation_time
+
+    @property
+    def average_rating(self):
+        """ Calculates average rating of all the review of the 
+            current recipe and round it up to 1 decimal place. """
+        ratings = self.reviews.values('rating') # Returns list of dictionaries
+        print(ratings)
+        # Loop through each dictionary of the list and get rating from it
+        average_rating = sum([int(rating.get('rating')) for rating in ratings])/len(ratings)
+        average_rating = round(average_rating, 1)
+        return average_rating
 
 
     def save(self, *args, **kwargs):
         """ Overriding save method of models.Model to automatically 
         slugify each recipe using its title """
-        ingredients = kwargs.pop('ingr')
-        utensils = kwargs.pop('utns')
+        ingredients = kwargs.pop('ingr', [])
+        utensils = kwargs.pop('utns', [])
         try:
             self.slug = slugify(self.title)
             super(Recipe, self).save(*args, **kwargs)
 
             for ingredient in ingredients:
-                ingredientItem = IngredientItem(quantity=ingredient.quantity, unit=ingredient.unit,
-                                            ingredient=Ingredient.objects.filter(name=ingredient.name).first(),
-                                            recipe=self)
-                ingredientItem.save()
-
-
+                IngredientItem(quantity=ingredient.quantity,
+                                                unit=ingredient.unit,
+                                                ingredient=Ingredient.objects.
+                                                filter(name=ingredient.name).first(),
+                                                recipe=self).save()
             for utensil in utensils:
                 utensilItem = UtensilItem(quantity=utensil.quantity, 
-                                            utensil=Utensil.objects.get(name=utensil.name),
+                                            utensil=Utensil.objects.
+                                            get(name=utensil.name),
                                             recipe=self)
-
         except IntegrityError:
             pass
            
+    
+    def get_quantity_of_ingredients_from_number_of_dishes(self, 
+                                        current_num_of_dishes):
+        """ A helper function which calculates the quantity for each
+            ingredient of a recipe given current number of dishes.
+        """
+        quantities = []
+        for ingredientItem in self.ingredients.all():
+            quantity = ingredientItem.quantity
+            if quantity:
+                ratio = float(quantity) / self.num_of_dishes
+                quantity = ratio * current_num_of_dishes
+
+            quantities.append(quantity)
+        return quantities
+
+    
+    @property
+    def thumbnail_image(self):
+        """ Returns url for thumbnail of the recipe from one of the
+            many images it has. If no image then return the image
+            of its category or default.jpg if there is no category 
+            related to it.  """
+        image = self.recipe_images.first()
+        if image:
+            return os.path.join(settings.STATIC_URL, image.image.url)
+        if self.category:
+            return os.path.join(settings.MEDIA_URL, self.category.image.url)
+        return os.path.join(settings.STATIC_URL, 'img/default.jpg')
 
     class Meta:
         ordering = ['title']

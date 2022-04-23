@@ -24,6 +24,7 @@ class Category(models.Model):
                             )
     slug = models.SlugField(unique=True, 
                             help_text='Automatically generated from the title')
+    image = models.ImageField(default='categories/default.jpg', upload_to='categories')
     
     def __str__(self):
         return self.name
@@ -43,9 +44,10 @@ class Review(models.Model):
     - rating: The Rating, which a user has given to the review.
         i.e. 5, 4, 3, 2, 1
     """
-    reviewed_recipe = models.ForeignKey(to="recipes.Recipe", on_delete=models.CASCADE)
-    user = models.ForeignKey(to=settings.AUTH_USER_MODEL, on_delete=models.SET_DEFAULT,
-                                default="Anonymous")
+    recipe = models.ForeignKey(to="recipes.Recipe", on_delete=models.CASCADE,
+                                            related_name='reviews')
+    user = models.ForeignKey(to=settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
+                                null=True)
     rating = models.CharField(max_length=1, choices=DEFAULT_CHOICES,
                                 blank=False, null=False)
     content = models.TextField( max_length=1024,

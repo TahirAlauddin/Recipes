@@ -131,17 +131,16 @@ STATICFILES_DIRS = [
 AUTH_USER_MODEL = 'users.CustomUser'
 
 # Login/Logout Settings
-LOGIN_REDIRECT_URL = 'recipes/'
-LOGIN_URL = 'accounts/login'
-LOGOUT_REDIRECT_URL = 'accounts/login'
-LOGOUT_URL = 'accounts/logout'
+LOGIN_REDIRECT_URL = 'home'
+LOGIN_URL = 'account_login'
+LOGOUT_REDIRECT_URL = 'account_login'
+LOGOUT_URL = 'account_logout'
 
 DATE_INPUT_FORMATS = ['%d-%m-%Y']
 
-
+# Media Settings
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 MEDIA_URL = '/media/'
-# ADMIN_MEDIA_PREFIX = '/media/'
 
 # DJANGO-AUTH SETTINGS
 ACCOUNT_ADAPTER = 'authentication.adapter.CustomUserAdapter'
@@ -151,7 +150,9 @@ ACCOUNT_SIGNUP_PASSWORD_ENTER_TWICE = False
 ACCOUNT_FORMS = {
     'signup': 'authentication.forms.CustomSignupForm',
 }
-
+ACCOUNT_EMAIL_CONFIRMATION_ANONYMOUS_REDIRECT_URL = LOGIN_URL
+ACCOUNT_EMAIL_CONFIRMATION_AUTHENTICATED_REDIRECT_URL = LOGIN_REDIRECT_URL
+ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS = 1
 
 # Email Settings
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'

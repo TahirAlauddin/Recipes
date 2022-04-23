@@ -10,7 +10,7 @@ User = get_user_model()
 def view_profile(request):
     # If PUT request made, update the content of the profile
     if request.method == "PUT":
-        # get the data from the form
+        # Get the data form data
         form = request.PUT
         birth_date = form.get('birth_date')
         address = form.get('address')
@@ -21,6 +21,7 @@ def view_profile(request):
         profile_pic = form.FILES.get('profile_pic')
 
         # TODO: update profile
+        # Update user attributes with the form data
         user = User.objects.get(id=request.user.id)
         user.birth_date = birth_date
         user.address = address
