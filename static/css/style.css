@@ -1,3 +1,4 @@
+@import url(https://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css);
 * {
   margin: 0;
   padding: 0;
@@ -363,7 +364,8 @@
       font-weight: 600; }
     .recipe .row .form .heading {
       font-size: 20px;
-      margin-top: 20px; }
+      margin-top: 20px;
+      font-weight: 600; }
     .recipe .row .form .addmem {
       float: right;
       border-radius: 45px; }
@@ -466,6 +468,59 @@
     .view-recipe .row .show .products .row p {
       font-size: 18px;
       padding: 10px 0; }
+    .view-recipe .row .show .products .time {
+      background-color: #fddedb;
+      border-radius: 10px; }
+      .view-recipe .row .show .products .time .head {
+        border-bottom: 1px solid #a0a0a0; }
+      .view-recipe .row .show .products .time .heading {
+        font-weight: 600; }
+
+.experience .row {
+  justify-content: center; }
+  .experience .row .sec { }
+    .experience .row .sec .heading {
+      margin-top: 10px; }
+      .experience .row .sec .heading span {
+        font-size: 20px;
+        font-weight: 600;
+        border-bottom: 2px solid #FF6F61; }
+    .experience .row .sec .inputs {
+      border-radius: 5px;
+      padding: 5px 10px;
+      margin-bottom: 10px;
+      border: 1px solid #FF6F61;
+      outline: none; }
+    .experience .row .sec .rating {
+      border: none; }
+    .experience .row .sec .rating > [id^="star"] {
+      display: none; }
+    .experience .row .sec .rating > label:before {
+      margin: 5px;
+      width: 20%;
+      font-size: 30px;
+      font-family: FontAwesome;
+      display: inline-block;
+      content: "\f005"; }
+    .experience .row .sec .rating > .half:before {
+      content: "\f089"; }
+    .experience .row .sec .rating > label {
+      color: #ddd;
+      float: right; }
+    .experience .row .sec .rating > [id^="star"]:checked ~ label,
+    .experience .row .sec .rating:not(:checked) > label:hover,
+    .experience .row .sec .rating:not(:checked) > label:hover ~ label {
+      color: #FF9F95; }
+    .experience .row .sec .rating > [id^="star"]:checked + label:hover,
+    .experience .row .sec .rating > [id^="star"]:checked ~ label:hover,
+    .experience .row .sec .rating > label:hover ~ [id^="star"]:checked ~ label,
+    .experience .row .sec .rating > [id^="star"]:checked ~ label:hover ~ label {
+      color: #FF6F61; }
+    .experience .row .sec .btn {
+      float: right;
+      padding: 5px 20px;
+      border-radius: 25px;
+      border: 2px solid #FF6F61; }
 
 .comments .sec {
   box-shadow: 0px 0px 10px 1px #ffe8e6;
@@ -511,6 +566,54 @@
         border: 2px solid #FF6F61;
         width: 25%; }
         .account .row .form .account-btn:hover {
+          background-color: #FF6F61;
+          color: #ffffff; }
+
+.update {
+  background-image: url(../img/back.jpg);
+  background-position: center;
+  background-size: cover; }
+  .update .row {
+    justify-content: center; }
+    .update .row .form {
+      background-color: #ffffff;
+      border-radius: 10px; }
+      .update .row .form h1 {
+        text-align: center;
+        font-size: 30px;
+        font-weight: 600; }
+      .update .row .form .image {
+        text-align: center; }
+        .update .row .form .image #photo {
+          height: 150px;
+          width: 150px;
+          object-fit: cover;
+          border-radius: 250px;
+          border: 1px solid #FF6F61; }
+        .update .row .form .image #file {
+          display: none; }
+        .update .row .form .image .uploadBtn {
+          height: 40px;
+          font-size: 15px;
+          cursor: pointer; }
+      .update .row .form label {
+        font-size: 18px;
+        font-weight: 500; }
+      .update .row .form .inputs {
+        width: 100%;
+        padding: 5px 10px;
+        outline: none;
+        border: 1px solid #a0a0a0;
+        border-radius: 5px;
+        margin: 10px 0; }
+      .update .row .form .account-btn {
+        background-color: transparent;
+        border-radius: 20px;
+        font-weight: 600;
+        color: #FF6F61;
+        border: 2px solid #FF6F61;
+        width: 25%; }
+        .update .row .form .account-btn:hover {
           background-color: #FF6F61;
           color: #ffffff; }
 

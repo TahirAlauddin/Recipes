@@ -2,7 +2,10 @@ from django.contrib.auth import get_user_model
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
 from django.utils import timezone
+from django.conf import settings
 from PIL import Image
+import os
+
 
 
 GENDER_CHOICE = [
@@ -75,7 +78,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 
     @property
     def profile_picture(self):
-        return self.profile.image
+        return os.path.join(settings.MEDIA_URL, self.profile.image.url)
 
     class Meta:
         verbose_name = 'User'

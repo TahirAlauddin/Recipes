@@ -15,8 +15,8 @@ class CustomUserAdminConfig(UserAdmin):
     
     fieldsets = (
         (None, {'fields':('email', 'username')}),
-        ('Permissions', {'fields':('is_staff', 'is_active', 
-                        'is_superuser', 'groups', 'user_permissions')}),
+        # ('Permissions', {'fields':('is_staff', 'is_active', 
+        #                 'is_superuser', 'groups', 'user_permissions')}),
         ('Personal', {'fields':('gender', 'postal_code',
                                 'address', 'city', 'country')}),
         ('Important Dates', {'fields':('created_since', 'birth_date')})
@@ -24,8 +24,8 @@ class CustomUserAdminConfig(UserAdmin):
 
     add_fieldsets = (
         (None, {'fields':('email', 'username')}),
-        ('Permissions', {'fields':('is_staff', 'is_active', 
-                        'is_superuser', 'groups', 'user_permissions')}),
+        # ('Permissions', {'fields':('is_staff', 'is_active', 
+        #                 'is_superuser', 'groups', 'user_permissions')}),
         ('Personal', {'fields':('gender', 'postal_code',
                                 'address', 'city', 'country')}),
         ('Important Dates', {'fields':('created_since', 'birth_date')})

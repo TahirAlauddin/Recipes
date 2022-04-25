@@ -31,7 +31,6 @@ utensil_objects = []
 recipes_list = []
 
 
-
 @dataclass
 class Ingredient:
     name: str
@@ -141,6 +140,14 @@ def scrape_marmiton(url, deepness):
 
 
     time,difficulty,cost = soup.findAll('p', attrs={'class': "RCP__sc-1qnswg8-1 iDYkZP"})
+
+    # Scrape picture of Recipe
+    # TODO: Might wanna add this functionality to the scrapper
+    # picture_of_recipe = soup.find('img', attrs={'class': "SHRD__sc-dy77ha-0 vKBPb"})
+    # picture_link = picture_of_recipe['href']
+    # response = requests.get(picture_link)
+    # picture_data = response.content
+
 
     description_and_steps = soup.find('ul', attrs={'class': None, 'id': None}).getText()
     time = time.getText(strip=True)

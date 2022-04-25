@@ -7,5 +7,7 @@ urlpatterns = [
     path("create-utensil/", views.view_create_utensil, name="create-utensil"),
     path("recipe-detail/<str:slug>/", views.view_recipe_detail, name="recipe-detail"),
     path("category/", views.view_category, name='category'),
-    path("category/<str:slug>", views.view_category_detail, name='category-detail'),
+    path("category/<str:slug>/", views.view_category_detail, name='category-detail'),
+    path("approve-recipes/", views.view_non_approved_recipes, name='approve-recipes'),
+    path("approve-recipes/<str:slug>", views.view_non_approved_recipes_detail, name='approve-recipes-detail'),
 ]

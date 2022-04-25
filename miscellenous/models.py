@@ -46,7 +46,7 @@ class Review(models.Model):
     """
     recipe = models.ForeignKey(to="recipes.Recipe", on_delete=models.CASCADE,
                                             related_name='reviews')
-    user = models.ForeignKey(to=settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
+    owner = models.ForeignKey(to=settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
                                 null=True)
     rating = models.CharField(max_length=1, choices=DEFAULT_CHOICES,
                                 blank=False, null=False)
@@ -58,10 +58,10 @@ class Review(models.Model):
         auto_now_add=True,
     )
 
-    def get_user(self):
-        """Returns the user who wrote this review or ``Anonymous``."""
-        if self.user:
-            return self.user.username
+    def get_owner(self):
+        """Returns the owner who wrote this review or ``Anonymous``."""
+        if self.owner:
+            return self.owner.username
         return _('Anonymous')
 
     def is_editable(self):

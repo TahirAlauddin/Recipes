@@ -9,8 +9,10 @@
             <div class="row">
                 <div class="col-12 col-lg-9 recipe-stack">
                     <div class="row mod-first py-5">
-                        <div class="col-12 col-lg-4 my-3 my-lg-0 item">
-                            <a href="{% url 'recipe-detail' 'recipe.slug' %}" style="text-decoration: none;">
+                        
+                    {% for recipe in recipes %}
+                    <div class="col-12 col-lg-4 my-3 my-lg-0 item">
+                        <a href="{% url 'recipe-detail' recipe.slug %}" style="text-decoration: none;">
                                 <img src="{% static 'img/img3.jpg' %}">
                                 <div class="detail">
                                     <p>Lorem ipsum dolor, sit amet</p>
@@ -19,144 +21,14 @@
                                         <p class="pro-id">John</p>
                                     </span>
                                     <span class="like">
-                                        <i class="fa fa-heart"></i>
-                                        <p class="like-id">250 likes!</p>
+                                        <i class="fa fa-star"></i>
+                                        <p class="like-id">{{recipe.average_rating}} stars!</p>
                                     </span>
                                 </div>
                             </a>
                         </div>
-                        <div class="col-12 col-lg-4 my-3 my-lg-0 item">
-                            <a href="{% url 'recipe-detail' 'recipe.slug' %}" style="text-decoration: none;">
-                                <img src="{% static 'img/img1.jpg' %}">
-                                <div class="detail">
-                                    <p>Lorem ipsum dolor, sit amet</p>
-                                    <span class="profile">
-                                        <img src="{% static 'img/profile.jpg' %}" class="pro-img">
-                                        <p class="pro-id">John</p>
-                                    </span>
-                                    <span class="like">
-                                        <i class="fa fa-heart"></i>
-                                        <p class="like-id">250 likes!</p>
-                                    </span>
-                                </div>
-                            </a>
-                        </div>
-                        <div class="col-12 col-lg-4 my-3 my-lg-0 item">
-                            <a href="{% url 'recipe-detail' 'recipe.slug' %}" style="text-decoration: none;">
-                                <img src="{% static 'img/img3.jpg' %}">
-                                <div class="detail">
-                                    <p>Lorem ipsum dolor, sit amet</p>
-                                    <span class="profile">
-                                        <img src="{% static 'img/profile.jpg' %}" class="pro-img">
-                                        <p class="pro-id">John</p>
-                                    </span>
-                                    <span class="like">
-                                        <i class="fa fa-heart"></i>
-                                        <p class="like-id">250 likes!</p>
-                                    </span>
-                                </div>
-                            </a>
-                        </div>
-                    </div>
-                    <div class="row mod-first py-5">
-                        <div class="col-12 col-lg-4 my-3 my-lg-0 item">
-                            <a href="{% url 'recipe-detail' 'recipe.slug' %}" style="text-decoration: none;">
-                                <img src="{% static 'img/img1.jpg' %}">
-                                <div class="detail">
-                                    <p>Lorem ipsum dolor, sit amet</p>
-                                    <span class="profile">
-                                        <img src="{% static 'img/profile.jpg' %}" class="pro-img">
-                                        <p class="pro-id">John</p>
-                                    </span>
-                                    <span class="like">
-                                        <i class="fa fa-heart"></i>
-                                        <p class="like-id">250 likes!</p>
-                                    </span>
-                                </div>
-                            </a>
-                        </div>
-                        <div class="col-12 col-lg-4 my-3 my-lg-0 item">
-                            <a href="{% url 'recipe-detail' 'recipe.slug' %}" style="text-decoration: none;">
-                                <img src="{% static 'img/img3.jpg' %}">
-                                <div class="detail">
-                                    <p>Lorem ipsum dolor, sit amet</p>
-                                    <span class="profile">
-                                        <img src="{% static 'img/profile.jpg' %}" class="pro-img">
-                                        <p class="pro-id">John</p>
-                                    </span>
-                                    <span class="like">
-                                        <i class="fa fa-heart"></i>
-                                        <p class="like-id">250 likes!</p>
-                                    </span>
-                                </div>
-                            </a>
-                        </div>
-                        <div class="col-12 col-lg-4 my-3 my-lg-0 item">
-                            <a href="{% url 'recipe-detail' 'recipe.slug' %}" style="text-decoration: none;">
-                                <img src="{% static 'img/img1.jpg' %}">
-                                <div class="detail">
-                                    <p>Lorem ipsum dolor, sit amet</p>
-                                    <span class="profile">
-                                        <img src="{% static 'img/profile.jpg' %}" class="pro-img">
-                                        <p class="pro-id">John</p>
-                                    </span>
-                                    <span class="like">
-                                        <i class="fa fa-heart"></i>
-                                        <p class="like-id">250 likes!</p>
-                                    </span>
-                                </div>
-                            </a>
-                        </div>
-                    </div>
-                    <div class="row mod-first py-5">
-                        <div class="col-12 col-lg-4 my-3 my-lg-0 item">
-                            <a href="{% url 'recipe-detail' 'recipe.slug' %}" style="text-decoration: none;">
-                                <img src="{% static 'img/img3.jpg' %}">
-                                <div class="detail">
-                                    <p>Lorem ipsum dolor, sit amet</p>
-                                    <span class="profile">
-                                        <img src="{% static 'img/profile.jpg' %}" class="pro-img">
-                                        <p class="pro-id">John</p>
-                                    </span>
-                                    <span class="like">
-                                        <i class="fa fa-heart"></i>
-                                        <p class="like-id">250 likes!</p>
-                                    </span>
-                                </div>
-                            </a>
-                        </div>
-                        <div class="col-12 col-lg-4 my-3 my-lg-0 item">
-                            <a href="{% url 'recipe-detail' 'recipe.slug' %}" style="text-decoration: none;">
-                                <img src="{% static 'img/img1.jpg' %}">
-                                <div class="detail">
-                                    <p>Lorem ipsum dolor, sit amet</p>
-                                    <span class="profile">
-                                        <img src="{% static 'img/profile.jpg' %}" class="pro-img">
-                                        <p class="pro-id">John</p>
-                                    </span>
-                                    <span class="like">
-                                        <i class="fa fa-heart"></i>
-                                        <p class="like-id">250 likes!</p>
-                                    </span>
-                                </div>
-                            </a>
-                        </div>
-                        <div class="col-12 col-lg-4 my-3 my-lg-0 item">
-                            <a href="{% url 'recipe-detail' 'recipe.slug' %}" style="text-decoration: none;">
-                                <img src="{% static 'img/img3.jpg' %}">
-                                <div class="detail">
-                                    <p>Lorem ipsum dolor, sit amet</p>
-                                    <span class="profile">
-                                        <img src="{% static 'img/profile.jpg' %}" class="pro-img">
-                                        <p class="pro-id">John</p>
-                                    </span>
-                                    <span class="like">
-                                        <i class="fa fa-heart"></i>
-                                        <p class="like-id">250 likes!</p>
-                                    </span>
-                                </div>
-                            </a>
-                        </div>
+                    {% endfor %}    
+                        
                     </div>
                     <a href="{% url 'create-recipe' %}" class="btn mb-5">
                         Add Recipe
@@ -168,29 +40,7 @@
 
     {% include '../codeSnippets/footer.html' %}
     <script src="{% static 'js/jquery.min.js' %}"></script>
-    <script src="{% static 'js/owl.carousel.min.js' %}"></script>
-    
-    <script>
-        $('.owl-carousel').owlCarousel({
-            loop:true, 
-            dots:false, 
-            autoplay:true,
-            center:true,
-            autoplayTimeout:3000,
-            responsive:{
-                0:{
-                    items:1
-                },
-                480:{
-                    items:1
-                },
-                768:{
-                    items:4
-                }
-            }
-        })
-    </script>
-    
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
 
     {% endblock content %}

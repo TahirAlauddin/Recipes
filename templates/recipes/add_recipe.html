@@ -23,7 +23,7 @@
                         <div class="col-12 col-lg-4">
                             <p class="heading">Difficulty</p>
                             <select name="difficulty" class="inputs w-100">
-                                <option>-</option>
+                                <option>Very Easy</option>
                                 <option>Easy</option>
                                 <option>Medium</option>
                                 <option>Hard</option>
@@ -32,24 +32,22 @@
                         <div class="col-12 col-lg-4">
                             <p class="heading">Cost</p>
                             <select name="cost" class="inputs w-100">
-                                <option>-</option>
-                                <option>Eggs</option>
-                                <option>Milk</option>
-                                <option>Butter</option>
+                                <option>Cheap</option>
+                                <option>Medium</option>
+                                <option>Expensive</option>
                             </select>
                         </div>
                         <div class="col-12 col-lg-4">
                             <p class="heading">Category</p>
                             <select name="category" class="inputs w-100">
-                                <option>-</option>
-                                <option>Eggs</option>
-                                <option>Milk</option>
-                                <option>Butter</option>
+                                {% for category in categories %}
+                                <option>{{category.name}}</option>
+                                {% endfor %}
                             </select>
                         </div>
                         <div class="col-12 col-lg-6 mb-5">
-                            <p class="heading">Members</p>
-                            <input name="members" type="number" id="addmem" value="1" min="1" max="100" />
+                            <p class="heading">Number of Dishes</p>
+                            <input name="dishes" type="number" id="addmem" value="1" min="1" max="100" />
                         </div> 
                         <div class="col-12 times">
                             <p class="heading">Preparation Time</p>
@@ -93,9 +91,14 @@
                     </div>
                     <br>
                     <label class="custom-file-upload my-3">
-                    <input name="images" type="file" multiple />
+                    <input name="images" type="file" multiple required/>
                         Upload Pictures
                     </label>
+                    <br>
+                    <label class="heading" for="youtube-url">Enter youtube link for the Video of the Recipe (Optional)</label>
+                    <br>
+                    <input class="element w-100" type="text" name="youtube-url" id="youtube-url" >
+                    <br>
                     <div class="content my-5">  
                         <h1 class="txt">
                             Ingredients
@@ -104,9 +107,14 @@
                             <span>
                                 Quantity:
                             </span>
-                            <input name="ingredients-quantity" type="number" id="quantityIng" min="0" max="100" value="1" class="element w-25">
-                            <input name="ingredients-unit" type="text" id="unitIng" placeholder="unit" class="w-25 element">
-                            <select name="ingredients" class="element w-25">
+                            <input name="ingredients-quantity" type="number" id="quantityIng" min="1" max="100" value="1" class="element w-25">
+                            <select name="ingredients-unit" type="text" id="unitIng" placeholder="unit" class="w-25 element">
+                                <option></option>
+                                {% for unit in units %}
+                                <option>{{unit}}</option>
+                                {% endfor %}
+                            </select>
+                            <select name="ingredients-name" class="element w-25">
                                 {% for ingredient in ingredients %}<option>{{ingredient.name}}</option>{% endfor %}
                             </select>
                             <br>
@@ -125,8 +133,8 @@
                             <span>
                                 Quantity
                             </span>
-                            <input name="utensils-quantity" type="number" id="quantityUte" min="0" max="100" value="1" class="element w-25">
-                            <select name="utensils" class="element w-25">
+                            <input name="utensils-quantity" type="number" id="quantityUte" min="1" max="100" value="1" class="element w-25">
+                            <select name="utensils-name" class="element w-25">
                                 {% for utensil in utensils %}<option>{{utensil.name}}</option>{% endfor %}
                             </select>
                             <br>
@@ -167,9 +175,13 @@
         <span>
             Quantity:
         </span>
-        <input name="ingredients-quantity" type="number" id="quantityIng" min="0" max="100" value="1" class="element w-25">
-        <input name="ingredients-unit" type="text" id="unitIng" placeholder="unit" class="w-25 element">
-        <select name="ingredients" class="element w-25">
+        <input name="ingredients-quantity" type="number" id="quantityIng" min="1" max="100" value="1" class="element w-25">
+        <select name="ingredients-unit" type="text" id="unitIng" placeholder="unit" class="w-25 element">
+            <option></option>
+            {% for unit in units %}
+            <option>{{unit}}</option>
+            {% endfor %}
+        </select>        <select name="ingredients" class="element w-25">
             ${ingredients}
         </select>
         <input type="button" value="-" onclick="removeRowIng(this)" class="element btn btn-danger">
@@ -192,7 +204,7 @@
         <span>
             Quantity
         </span>
-        <input name="utensils-quantity" type="number" id="quantityUte" min="0" max="100" value="1" class="element w-25">
+        <input name="utensils-quantity" type="number" id="quantityUte" min="1" max="100" value="1" class="element w-25">
         <select name="utensils" class="element w-25">
             ${utensils}
         </select>

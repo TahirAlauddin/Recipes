@@ -43,36 +43,12 @@ DIFFICULTY_CHOICES = [
 ]
 
 COST_CHOICES =  [
-    ('l', 'Low'),
+    ('c', 'Cheap'),
     ('m', 'Medium'),
-    ('h', 'High'),
+    ('e', 'Expensive'),
 ]
 
 
-class RecipeImage(models.Model):
-    """"
-    A Photo/Picture of a recipe
-    There is a One to Many Relationship between Recipe and
-    RecipeImage. Hence, there can be many images belonging 
-    to a single Recipe.
-    - image: The actual image or path to the image on server
-    - recipe: The Recipe the image belongs to
-
-    """
-    image = models.ImageField(upload_to='recipe_images')
-    recipe = models.ForeignKey("Recipe", related_name='recipe_images',
-                                on_delete=models.CASCADE, null=True)
-
-    def __str__(self):
-        """ String Representation of the object of RecipeImage """
-        return str(self.recipe) + " " + str(self.pk)
-    
-    
-    class Meta:
-        """ Meta Configurations of the class RecipeImage """
-        verbose_name = _('Recipe Image')
-        verbose_name_plural = _('Recipe Images')
-        ordering = ['recipe']
 
 
 class Ingredient(models.Model):
@@ -89,8 +65,8 @@ class Ingredient(models.Model):
                             unique=True,
                             help_text="Maximum 120 characters",
                             )
-    image = models.ImageField(upload_to='ingredient_items',
-                                    default='default_ingredient.jpg')
+    image = models.ImageField(upload_to='ingredients',
+                                default='ingredients/default_ingredient.jpg')
     approved = models.BooleanField(null=False, default=False)
 
     
@@ -121,8 +97,8 @@ class Utensil(models.Model):
                             unique=True,
                             help_text="Maximum 120 characters",
                             )
-    image = models.ImageField(upload_to='utensil_items',
-                                default='default_utensil.jpg')
+    image = models.ImageField(upload_to='utensils',
+                                default='utensils/default_utensil.jpg')
 
     def __str__(self):
         """ String Representation of the object of Utensil """
@@ -190,6 +166,32 @@ class UtensilItem(models.Model):
         return f"{self.quantity} {self.utensil}s" 
         
 
+class RecipeImage(models.Model):
+    """"
+    A Photo/Picture of a recipe
+    There is a One to Many Relationship between Recipe and
+    RecipeImage. Hence, there can be many images belonging 
+    to a single Recipe.
+    - image: The actual image or path to the image on server
+    - recipe: The Recipe the image belongs to
+
+    """
+    image = models.ImageField(upload_to='recipe_images')
+    recipe = models.ForeignKey("Recipe", related_name='recipe_images',
+                                on_delete=models.CASCADE, null=True)
+
+    def __str__(self):
+        """ String Representation of the object of RecipeImage """
+        return str(self.recipe) + " " + str(self.pk)
+    
+    
+    class Meta:
+        """ Meta Configurations of the class RecipeImage """
+        verbose_name = _('Recipe Image')
+        verbose_name_plural = _('Recipe Images')
+        ordering = ['recipe']
+
+
 class Recipe(models.Model):
     """"
     Recipe of a Food which consists of several fields and attributes
@@ -204,6 +206,7 @@ class Recipe(models.Model):
     - cost: The cost category which the Recipe belongs to i.e. Low, High 
     - approved: Whether the recipe is approved or not 
     - num_of_dishes: Initial number of dishes
+    - video_url: Url/link to the Recipe video
     """
     title = models.CharField(unique=True, 
                             max_length=120)
@@ -221,6 +224,7 @@ class Recipe(models.Model):
                                 null=True, related_name='recipes')
     num_of_dishes = models.IntegerField()
     approved = models.BooleanField(null=False, default=False)
+    video_url = models.URLField(null=True)
 
     def __str__(self):
         """ String representation of the Recipe class"""
@@ -252,11 +256,12 @@ class Recipe(models.Model):
         """ Calculates average rating of all the review of the 
             current recipe and round it up to 1 decimal place. """
         ratings = self.reviews.values('rating') # Returns list of dictionaries
-        print(ratings)
         # Loop through each dictionary of the list and get rating from it
-        average_rating = sum([int(rating.get('rating')) for rating in ratings])/len(ratings)
-        average_rating = round(average_rating, 1)
-        return average_rating
+        if ratings:
+            average_rating = sum([int(rating.get('rating')) for rating in ratings])/len(ratings)
+            average_rating = round(average_rating, 1)
+            return average_rating
+        return 0
 
 
     def save(self, *args, **kwargs):
@@ -275,10 +280,10 @@ class Recipe(models.Model):
                                                 filter(name=ingredient.name).first(),
                                                 recipe=self).save()
             for utensil in utensils:
-                utensilItem = UtensilItem(quantity=utensil.quantity, 
+                UtensilItem(quantity=utensil.quantity, 
                                             utensil=Utensil.objects.
                                             get(name=utensil.name),
-                                            recipe=self)
+                                            recipe=self).save()
         except IntegrityError:
             pass
            
@@ -312,7 +317,19 @@ class Recipe(models.Model):
             return os.path.join(settings.MEDIA_URL, self.category.image.url)
         return os.path.join(settings.STATIC_URL, 'img/default.jpg')
 
+    @property
+    def get_difficulty(self):
+        for difficulty in DIFFICULTY_CHOICES:
+            if difficulty[0] == self.difficulty:
+                return difficulty[1]
+
+
+    @property
+    def get_cost(self):
+        for cost in COST_CHOICES:
+            if cost[0] == self.cost:
+                return cost[1]
     class Meta:
-        ordering = ['title']
+        # ordering = ['title']
         verbose_name = _('Recipe')
         verbose_name_plural = _('Recipes')
