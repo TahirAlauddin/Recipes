@@ -34,6 +34,7 @@ INSTALLED_APPS = [
     # 3rd Party Libraries
     'allauth',
     'allauth.account',
+    'allauth.socialaccount',
 
     # Local Apps
     'recipes',

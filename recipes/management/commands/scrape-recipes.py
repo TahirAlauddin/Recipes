@@ -13,7 +13,7 @@ url = 'https://marmiton.org'
 
 SAVE_TO_PICKEL = True
 PRINT_RESULTS = False
-DEEPNESS = 200
+DEEPNESS = 20
 
 
 scrapped = 0
@@ -53,8 +53,10 @@ class Recipe:
     difficulty: str
     cost: str
     description: str
+    num_of_dishes: int
     ingredients: List[Ingredient]
     utensils: List[Utensil]
+
 
 def str_to_time(prep_time, rest_time, cook_time):
 
@@ -148,6 +150,11 @@ def scrape_marmiton(url, deepness):
     # response = requests.get(picture_link)
     # picture_data = response.content
 
+    try:
+        num_of_dishes = soup.find('span', attrs={'class': "SHRD__sc-w4kph7-4 hYSrSW"})
+        num_of_dishes = num_of_dishes.getText()    
+    except:
+        num_of_dishes = 3
 
     description_and_steps = soup.find('ul', attrs={'class': None, 'id': None}).getText()
     time = time.getText(strip=True)
@@ -239,23 +246,24 @@ def scrape_marmiton(url, deepness):
         difficulty = 'h'
 
     if cost.lower() == 'bon marché':
-        cost = 'l'
+        cost = 'c'
     elif cost.lower() in ['coût moyen', 'moyen']:
         cost = 'm'
     elif cost.lower() == 'assez cher':
-        cost = 'h'
+        cost = 'e'
 
     if scrape:
         # Adding recipe to the database
         recipe = Recipe(title=title_recipe, prep_time=prep_time, cook_time=cook_time, 
                         rest_time=rest_time, difficulty=difficulty,
                         cost=cost, description=description_and_steps, 
-                        ingredients=recipe_ingredients, utensils=recipe_utensils)
+                        ingredients=recipe_ingredients, utensils=recipe_utensils,
+                        num_of_dishes=num_of_dishes)
 
         recipes_list.append(recipe)
         titles.append(title_recipe)
         scrapped += 1
-        print("A Recipe added", scrapped)
+        print(f"{scrapped} Recipe added")
 
 
 def print_results():

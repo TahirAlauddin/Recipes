@@ -12,15 +12,6 @@
 </style>
 
 
-<section class="view-recipe">
-    <div class="container-fluid">
-        <div class="row py-5">
-        <form method="post">
-            <input type="submit" value="APPROVE IT" class="btn">
-        </form>
-    </div>
-    </div>
-</section>
 
 <section class="view-recipe">
     <div class="container-fluid">
@@ -38,10 +29,26 @@
                     </div>
                 </div>
 
+
+                <section class="view-recipe">
+                    <div class="container-fluid">
+                        <div class="row py-5">
+                        <form method="post">
+                            {% csrf_token %}
+                            <input style="background-color: #FF6F61;" type="submit" value="APPROVE IT" class="btn">
+                        </form>
+                    </div>
+                    </div>
+                </section>
+                
+
                 <div class="w3-content w3-display-container" style="max-width:800px">
+                    {% if recipe.video_url %}
                     <iframe class="w-100 image mySlides" width="420" height="315"
                     src="{{recipe.video_url}}">
                     </iframe>
+                    {% endif %}
+                    <img class="w-100 image mySlides" src="{{ recipe.thumbnail_image }}">
                     {% for image in images %}
                     <img class="w-100 image mySlides" src="{{ image.image.url }}">
                     {% endfor %}
@@ -78,7 +85,7 @@
                 </div>
                 <div class="col-12 col-lg-4">
                     <p class="heading">Number of Dishes</p>
-                    <input type="number" id="addmem" value="1" min="1" max="100" />
+                    <input type="number" name="num_of_dishes" id="addmem" value="{{recipe.num_of_dishes}}" min="1" max="100" />
                 </div>
                 <div class="products mb-5 text-center">
                     <h1 class="mb-5">
@@ -91,7 +98,7 @@
                         <div class="col-12 col-lg-3">
                             <img src="{{ingredientItem.ingredient.image.url}}" class="img">
                             <br>
-                            <span name="ingredientItem-quantity">{{ingredientItem.quantity}}</span>
+                            <span id="ingredientItem-{{forloop.counter0}}" name="ingredientItem-quantity">{{ingredientItem.quantity}}</span>
                             <span name="ingredientItem-unit">{{ingredientItem.unit}}</span>
                             <span name="ingredientItem-name">{{ingredientItem.ingredient.name}}</span>
                         </div>
@@ -251,6 +258,32 @@
       dots[slideIndex-1].className += " w3-white";
     }
     </script>
+
+    <script>
+
+        
+        let ingredientTag;
+        let slug = '{{recipe.slug}}';
+        let dishes_input = document.getElementById('addmem');
+        dishes_input.addEventListener('change', function() {
+    
+            fetch(`/api/get_num_of_dishes/${slug}/${dishes_input.value}/`)
+                .then(response => response.json())
+                .then(function(data) {
+                    for (let i=0; i < data.length; i++) {
+                        ingredientTag = document.getElementById(`ingredientItem-${i}`);
+                        if (data[i] != '') {
+                            ingredientTag.innerHTML = Math.round(data[i]);
+                        }
+                        else {
+                            ingredientTag.innerHTML = data[i];
+                        }
+                        }
+                })
+                .catch(error => console.log(error))
+        })
+    
+        </script>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
 

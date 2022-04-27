@@ -221,10 +221,10 @@ class Recipe(models.Model):
     difficulty = models.CharField(max_length=1, choices=DIFFICULTY_CHOICES)
     cost = models.CharField(max_length=1, choices=COST_CHOICES)
     category = models.ForeignKey(to=Category, on_delete=models.SET_NULL,
-                                null=True, related_name='recipes')
+                            blank=True, null=True, related_name='recipes')
     num_of_dishes = models.IntegerField()
     approved = models.BooleanField(null=False, default=False)
-    video_url = models.URLField(null=True)
+    video_url = models.URLField(null=True, blank=True)
 
     def __str__(self):
         """ String representation of the Recipe class"""
@@ -284,8 +284,9 @@ class Recipe(models.Model):
                                             utensil=Utensil.objects.
                                             get(name=utensil.name),
                                             recipe=self).save()
+            return True
         except IntegrityError:
-            pass
+            return False
            
     
     def get_quantity_of_ingredients_from_number_of_dishes(self, 

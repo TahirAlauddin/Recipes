@@ -4,6 +4,8 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 import os, os.path
 
+# Get the User model, either Django's builtin User
+# Or our Custom User, depending on the settings.py
 User = get_user_model()
 
 @login_required
@@ -13,7 +15,7 @@ def view_profile(request):
 
 @login_required
 def view_profile_update(request):
-    # If PUT request made, update the content of the profile
+    # If POST request made, update the content of the profile
     if request.method == "POST":
         # Get the data form data
         form = request.POST
@@ -26,8 +28,6 @@ def view_profile_update(request):
         country = form.get('country')
         gender = form.get('gender')
         profile_picture = request.FILES.get('profile_picture')
-
-        print(profile_picture)
 
         # Update user attributes with the form data
         user = User.objects.get(id=request.user.id)

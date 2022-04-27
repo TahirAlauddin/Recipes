@@ -13,9 +13,9 @@
                     {% for recipe in recipes %}
                     <div class="col-12 col-lg-4 my-3 my-lg-0 item">
                         <a href="{% url 'recipe-detail' recipe.slug %}" style="text-decoration: none;">
-                                <img src="{% static 'img/img3.jpg' %}">
+                                <img src="{{recipe.thumbnail_image}}">
                                 <div class="detail">
-                                    <p>Lorem ipsum dolor, sit amet</p>
+                                    <p>{{recipe.title|slice:25}}</p>
                                     <span class="profile">
                                         <img src="{% static 'img/profile.jpg' %}" class="pro-img">
                                         <p class="pro-id">John</p>

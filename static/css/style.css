@@ -446,8 +446,11 @@
         text-decoration: none;
         float: right;
         color: #FF6F61; }
-    .view-recipe .row .show .image {
-      border-radius: 5px; }
+    .view-recipe .row .show .owl-carousel .item img {
+      width: 100%;
+      border-radius: 10px;
+      height: 400px;
+      object-fit: cover; }
     .view-recipe .row .show .sec {
       color: #FF6F61; }
       .view-recipe .row .show .sec p {
@@ -496,9 +499,8 @@
     .experience .row .sec .rating > [id^="star"] {
       display: none; }
     .experience .row .sec .rating > label:before {
-      margin: 5px;
-      width: 20%;
-      font-size: 30px;
+      margin: 2px;
+      font-size: 18px;
       font-family: FontAwesome;
       display: inline-block;
       content: "\f005"; }

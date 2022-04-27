@@ -1,20 +1,23 @@
 from django.shortcuts import render, redirect
-from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required, user_passes_test
-from django.contrib import messages 
-from django.conf import settings
 from django.contrib.auth import get_user_model
-from .models import *
+from django.contrib import messages 
+from django.http import JsonResponse
+from django.conf import settings
 from miscellenous.models import *
+from .models import *
+from .utils import *
 from datetime import time
 
 # Helper functions and Variables
 User = get_user_model()
+
+# A wrapper function to be used on top of a decorator
 def staff_required(login_url=None):
     return user_passes_test(lambda u: u.is_staff, login_url=login_url)
 
 
-# VIEWS
+# Home Page/ Recipe List Page
 def view_home(request):
     recipes = Recipe.objects.filter(approved=True).order_by('?')[:10]
     context = {'recipes': recipes}
@@ -26,90 +29,20 @@ def view_home(request):
 @login_required
 def view_create_recipe(request):
     if request.method == 'POST':
-        form = request.POST
-        images = request.FILES.getlist('images')
+        # Let the utility/helper function do its job
+        # It takes request object and returns True if 
+        # all necessary IngredientItems,UtensilItems,
+        # Recipe and RecipeImages were created successfully
+        recipe = handle_recipe_creation(request)
 
-        ingredients_quantity = form.getlist('ingredients-quantity')
-        ingredients_name = form.getlist('ingredients-name')
-        ingredients_unit = form.getlist('ingredients-unit')
-        utensils_quantity = form.getlist('utensils-quantity')
-        utensils_name = form.getlist('utensils-name')
-
-        category_name = form.get('category')
-
-        print(ingredients_quantity)
-        print(ingredients_name)
-        print(utensils_quantity)
-        print(utensils_name)
-
-        cost = form.get('cost')
-        difficulty = form.get('difficulty')
-        print(cost)
-        print(difficulty)
-        
-        # Write corresponding character into database
-        # v for Very Easy, e for easy and so on
-        for diff in DIFFICULTY_CHOICES:
-            if diff[1] == difficulty:
-                difficulty = diff[0]
-
-
-        # Write corresponding character into database
-        # c for Cheap, m for medium and so on
-        for cost_choice in COST_CHOICES:
-            if cost_choice[1] == cost:
-                cost = cost_choice[0]
-
-        category = Category.objects.get(name=category_name)
-        
-        # Create a recipe object with form data
-        recipe = Recipe(title=form.get('title'), description=form.get('description'),
-
-                        cost=cost, difficulty=difficulty, category=category,
-
-                        preparation_time=time(hour=int(form.get('prep-hours')),
-                                            minute=int(form.get('prep-minutes'))),
-                        cooking_time=time(hour=int(form.get('cooking-hours')),
-                                            minute=int(form.get('cooking-minutes'))),
-                        rest_time = time(hour=int(form.get('rest-hours')),
-                                            minute=int(form.get('rest-minutes'))),
-
-                        num_of_dishes=form.get('dishes'), 
-                        video_url=form.get('youtube-url'),
-                        )
-        recipe.save()
-
-        print("ingredients: ", ingredients_name)
-        print("ingredients: ", ingredients_quantity)
-        print("ingredients: ", ingredients_unit)
-
-        # Add images to the recipe
-        for image in images:
-            RecipeImage(image=image, recipe=recipe).save()
-
-        for ingredient_name, ingredient_unit, ingredient_quantity in zip(ingredients_name, ingredients_unit, ingredients_quantity):
-            # Create a IngredientItem object and save it to the database
-            print(ingredient_name)
-            print(ingredient_quantity)
-            print(ingredient_unit)
-            ingredient = Ingredient.objects.get(name=ingredient_name)
-            IngredientItem(ingredient=ingredient, quantity=ingredient_quantity,
-                            unit=ingredient_unit, recipe=recipe).save()
-
-        for utensil_name, utensil_quantity in zip(utensils_name, utensils_quantity):
-            # Create a UtensilItem object and save it to the database
-            print(utensil_name)
-            print(utensil_quantity)
-            utensil = Utensil.objects.get(name=utensil_name)
-            UtensilItem(utensil=utensil, quantity=utensil_quantity,
-                                            recipe=recipe).save()
-
+        if recipe:
+            messages.add_message(request, level=messages.SUCCESS, message=RECIPE_CREATED_SUCCESS_MESSAGE)
         # Redirect the user to the detail page of the recipe just created
         return redirect('recipe-detail', recipe.slug)
     
     # Retrieve all ingredients, utensils and categories to
     # show as a choice field in the html template
-    ingredients = Ingredient.objects.all()
+    ingredients = Ingredient.objects.filter(approved=True)
     utensils = Utensil.objects.all()
     categories = Category.objects.all()
     units = [unit_name for unit, unit_name in UNITS]
@@ -130,6 +63,9 @@ def view_create_ingredient(request):
         Ingredient(name = form.get('name'),
                    image = request.FILES.get('image')).save()
         
+        messages.add_message(request, level=messages.SUCCESS, message=INGREDIENT_CREATED_SUCCESS_MESSAGE)
+        return redirect('home')
+
     return render(request, "recipes/add_ingredients.html")
 
 
@@ -139,11 +75,13 @@ def view_create_ingredient(request):
 def view_create_utensil(request):
     if request.method == "POST":
         form = request.POST
-        print(form)
+
         # Create a new ingredient
         Utensil(name = form.get('name'),
-                image = request.FILES.get('image')).save()
-        
+                image = request.FILES.get('image')).save()        
+
+        # Let the user know that the utensil was created successfully
+        messages.add_message(request, level=messages.SUCCESS, message=UTENSIL_CREATED_SUCCESS_MESSAGE)
         return redirect('home')
         
     return render(request, "recipes/add_utensils.html")
@@ -158,13 +96,14 @@ def view_recipe_detail(request, slug):
         user = request.user
         if isinstance(user, User):
             # Same user can't give more than 1 reviews to a single recipe
-            reviews = Review.objects.filter(owner=user)
+            reviews = Review.objects.filter(owner=user, recipe=recipe)
             if reviews:
                 messages.add_message(request, level=messages.WARNING,
-                message="Oops! It looks like you have \
-                        already given a review to this recipe.\
-                        You can't give more than exactly 1 review.")
+                message=USER_ALREADY_GIVEN_REVIEW)
             else:
+                messages.add_message(request, level=messages.SUCCESS,
+                message=THANKS_FOR_REVIEW)
+
                 Review(recipe=recipe, rating=form.get('rating'),
                         content=form.get('content'), owner=user).save()
             return redirect('recipe-detail', slug)
@@ -179,6 +118,9 @@ def view_recipe_detail(request, slug):
     # the number of stars as rating as recipe.average_rating 
     rating_count = range(int(recipe.average_rating))
     images = recipe.recipe_images.all()
+    if images:
+        images = images[1:]
+        
     images_length_iterator = range(len(images))
     context = {'recipe': recipe, 'ingredientItems': ingredients, 
                 'utensilItems': utensils, 'comments': reviews,
@@ -192,23 +134,8 @@ def view_recipe_detail(request, slug):
 # a list of ingredient quantities for that particular number of dishes
 def get_ingredients_quantity_api_view(request, slug, current_num_of_dishes):
     recipe = Recipe.objects.get(slug=slug)
-    print(current_num_of_dishes)
     quantities = recipe.get_quantity_of_ingredients_from_number_of_dishes(current_num_of_dishes)
     return JsonResponse(quantities, safe=False)
-
-
-# View for category page
-def view_category(request):
-    categories = Category.objects.all()
-    context = {'categories': categories}
-    return render(request, 'recipes/category.html', context=context)
-
-
-# View for category detail page
-def view_category_detail(request, slug):
-    category = Category.objects.get(slug=slug)
-    context = {'category': category}
-    return render(request, 'recipes/category_detail.html', context=context)
 
 
 # Only authenticated users who are also staff members can access to this page
@@ -229,6 +156,20 @@ def view_non_approved_recipes_detail(request, slug):
         # Approve it
         un_approved_recipe.approved = True
         un_approved_recipe.save()
-        return redirect('unapproved-recipes')
-    context = {'recipe': un_approved_recipe}
+        return redirect('approve-recipes')
+    # Get all ingredientItems and utensilItems related the current
+    # recipe, Create a context and pass it to the template
+    ingredients = un_approved_recipe.ingredients.all()
+    utensils = un_approved_recipe.utensils.all()
+
+    images = un_approved_recipe.recipe_images.all()
+    # If there are images related to a recipe
+    # then exclude the first image in the queryset 
+    # because it will be automatically included
+    # in recipe.thumbnail_image property method.
+    if images:
+        images = images[1:]
+
+    context = {'recipe': un_approved_recipe, 'images': images,
+                'ingredientItems': ingredients, 'utensilItems': utensils}
     return render(request, 'recipes/unapproved_recipes_detail.html', context=context)

@@ -12,12 +12,12 @@ class Command(BaseCommand):
         ingredients = load(open("pickle/ingredients.pkl", 'rb'))
         
         print("Populating ingredients") 
-        ingredient_objects = [Ingredient(name=ingredient) for ingredient in ingredients]
+        ingredient_objects = [Ingredient(name=ingredient) for ingredient in set(ingredients)]
         Ingredient.objects.bulk_create(ingredient_objects)
         print("Ingredients populated successfully")
 
         print("Populating utensils") 
-        utensil_objects = [Utensil(name=utensil) for utensil in utensils]
+        utensil_objects = [Utensil(name=utensil) for utensil in set(utensils)]
         Utensil.objects.bulk_create(utensil_objects)
         print("Utensils populated successfully")
         
@@ -25,7 +25,7 @@ class Command(BaseCommand):
             recipe_obj = Recipe(title=recipe.title, description=recipe.description,
                         cost=recipe.cost, difficulty=recipe.difficulty,
                         preparation_time=recipe.prep_time, cooking_time=recipe.cook_time,
-                        rest_time=recipe.rest_time)
+                        rest_time=recipe.rest_time, num_of_dishes=int(recipe.num_of_dishes))
 
             recipe_obj.save(ingr=recipe.ingredients, utns=recipe.utensils)
 

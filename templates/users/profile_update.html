@@ -21,7 +21,7 @@ function changeImage() {
                         </h1>
                         <div class="image">
                             <img src="{{ user.profile_picture }}" id="photo" >
-                            <input name="profile_picture" type="file" id="file">
+                            <input name="profile_picture" type="file" id="file" accept="image/*">
                             <br>
                             <label for="file" onchange="changeImage()" class="btn uploadBtn">Choose Photo</label>
                         </div>

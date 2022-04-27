@@ -89,7 +89,7 @@ class Profile(models.Model):
     user = models.OneToOneField(CustomUser, on_delete=models.CASCADE,
                             related_name='profile')
     image = models.ImageField(default='profile_pics/default.jpg',
-                            upload_to='profile_pics')
+                                upload_to='profile_pics')
 
     def __str__(self):
         return f'{self.user.username} Profile'

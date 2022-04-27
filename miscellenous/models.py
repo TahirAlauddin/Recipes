@@ -45,7 +45,7 @@ class Review(models.Model):
         i.e. 5, 4, 3, 2, 1
     """
     recipe = models.ForeignKey(to="recipes.Recipe", on_delete=models.CASCADE,
-                                            related_name='reviews')
+                                related_name='reviews', null=True)
     owner = models.ForeignKey(to=settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
                                 null=True)
     rating = models.CharField(max_length=1, choices=DEFAULT_CHOICES,
@@ -83,7 +83,7 @@ class Review(models.Model):
         return True
 
     def __str__(self):
-        return f'{self.reviewed_recipe} - {self.get_user()}'
+        return f'{self.recipe} - {self.get_owner()}'
         
     class Meta:
         ordering = ['-creation_date']
