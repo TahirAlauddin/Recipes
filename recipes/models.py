@@ -1,53 +1,13 @@
 from django.db import models
+from django.core.files import File
 from django.utils.translation import gettext_lazy as _
 from django.utils.text import slugify
 from django.conf import settings
-from miscellenous.models import Category
 from django.db.utils import IntegrityError
 from datetime import time, timedelta
-import os
-
-UNITS = [
-    # Volume
-    ("tsp", "teaspoon"),
-    ("tbsp", "tablespoon"),
-    ("c", "cup"),
-    ("pt", "pint"),
-    ("qt", "quart"),
-    ("gal", "gallon"),
-    ("ml", "milliliter"), 
-    ("l", "liter"), 
-    ("dl", "deciliter"),
-    ("fl oz", "fluid ounce"),
-
-    # Mass and Weight
-    ("lb", "pound"),
-    ("oz", "ounce"),
-    ("mg", "milligram"),
-    ("g", "gram"),
-    ("kg", "kilogram"),
-
-    # Length
-    ("mm", "millimeter"),
-    ("cm", "centimeter"),
-    ("m", "meter"),
-    ("in", "inch"),
-]
-
-
-DIFFICULTY_CHOICES = [
-    ('v', 'Very Easy'),
-    ('e', 'Easy'),
-    ('m', 'Medium'),
-    ('h', 'Hard'),
-]
-
-COST_CHOICES =  [
-    ('c', 'Cheap'),
-    ('m', 'Medium'),
-    ('e', 'Expensive'),
-]
-
+from miscellenous.models import Category
+from .utils import *
+import os, urllib.request
 
 
 
@@ -66,10 +26,36 @@ class Ingredient(models.Model):
                             help_text="Maximum 120 characters",
                             )
     image = models.ImageField(upload_to='ingredients',
-                                default='ingredients/default_ingredient.jpg')
+                                default='default_ingredient.jpg')
     approved = models.BooleanField(null=False, default=False)
 
-    
+
+    def save(self, *args, **kwargs):
+        """ Overriding save method of models.Model to save
+        the images from #marmiton for each ingredient using
+        the url scrapped in scrape-recipes command """
+        
+        try:
+            img_url = kwargs.pop('img_url')
+        except KeyError:
+            return
+
+        image_filename = self.name.translate(str.maketrans('', '', PUNCTUATION)) + '.jpg'
+        try:            
+            # image_url is a URL to the image which #marmiton is using
+            result = urllib.request.urlretrieve(img_url) 
+        except:
+            return
+
+        # self.photo is the ImageField
+        self.image.save(
+            os.path.join(image_filename),
+            File(open(result[0], 'rb'))
+            )
+            
+        super(Ingredient, self).save(*args, **kwargs)
+        
+
     def __str__(self):
         """ String Representation of the object of Ingredient """
         return self.name
@@ -98,8 +84,33 @@ class Utensil(models.Model):
                             help_text="Maximum 120 characters",
                             )
     image = models.ImageField(upload_to='utensils',
-                                default='utensils/default_utensil.jpg')
+                                default='default_utensil.jpg')
 
+    def save(self, *args, **kwargs):
+        """ Overriding save method of models.Model to save
+        the images from #marmiton for each utensil using
+        the url scrapped in scrape-recipes command """
+        try:
+            img_url = kwargs.pop('img_url', None)
+        except KeyError:
+            return
+        
+        image_filename = self.name.translate(str.maketrans('', '', PUNCTUATION)) + '.jpg'
+            
+        try:
+            # image_url is a URL to the image which #marmiton is using
+            result = urllib.request.urlretrieve(img_url) 
+        except:
+            return
+
+        # self.photo is the ImageField
+        self.image.save(
+            os.path.join(image_filename),
+            File(open(result[0], 'rb'))
+            )
+
+        super(Utensil, self).save(*args, **kwargs)
+    
     def __str__(self):
         """ String Representation of the object of Utensil """
         return self.name
@@ -269,22 +280,43 @@ class Recipe(models.Model):
         slugify each recipe using its title """
         ingredients = kwargs.pop('ingr', [])
         utensils = kwargs.pop('utns', [])
+        recipe = kwargs.pop('rcp', None)
+        
         try:
             self.slug = slugify(self.title)
             super(Recipe, self).save(*args, **kwargs)
 
             for ingredient in ingredients:
                 IngredientItem(quantity=ingredient.quantity,
-                                                unit=ingredient.unit,
-                                                ingredient=Ingredient.objects.
-                                                filter(name=ingredient.name).first(),
-                                                recipe=self).save()
+                                unit=ingredient.unit,
+                                ingredient=Ingredient.objects.
+                                filter(name=ingredient.name).first(),
+                                recipe=self).save()
+
             for utensil in utensils:
                 UtensilItem(quantity=utensil.quantity, 
-                                            utensil=Utensil.objects.
-                                            get(name=utensil.name),
-                                            recipe=self).save()
+                            utensil=Utensil.objects.
+                            get(name=utensil.name),
+                            recipe=self).save()
+
+        
+            if recipe:
+                title = recipe.title
+                image_filename = title.translate(str.maketrans('', '', PUNCTUATION)) + '.jpg'
+                with open(f"media/recipe_images/{image_filename}", 'wb') as picture:
+                    picture.write(recipe.recipe_image.image)
+
+                #? Read the content of the file (Recipe Image) and create an
+                #? instance of RecipImage
+                recipeImageFile = File( open(f"media/recipe_images/{image_filename}", 'rb'))
+                recipeImage = RecipeImage(image= recipeImageFile )
+                recipeImage.recipe = self
+                recipeImage.save()
+
+                print(f"{recipeImage} saved")
+                
             return True
+
         except IntegrityError:
             return False
            

@@ -1,6 +1,7 @@
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django.conf import settings
+from django.utils.text import slugify
 
 
 DEFAULT_CHOICES = (
@@ -24,10 +25,18 @@ class Category(models.Model):
                             )
     slug = models.SlugField(unique=True, 
                             help_text='Automatically generated from the title')
-    image = models.ImageField(default='categories/default.jpg', upload_to='categories')
+    image = models.ImageField(default='default_category.jpg', upload_to='categories')
     
     def __str__(self):
         return self.name
+
+    def save(self, *args, **kwargs):
+        """ Overriding save method of models.Model to automatically 
+        slugify each recipe using its name """
+
+        self.slug = slugify(self.name)
+        super(Category, self).save(*args, **kwargs)
+
 
     class Meta:
         verbose_name = _('Category')

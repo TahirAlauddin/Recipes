@@ -88,7 +88,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 class Profile(models.Model):
     user = models.OneToOneField(CustomUser, on_delete=models.CASCADE,
                             related_name='profile')
-    image = models.ImageField(default='profile_pics/default.jpg',
+    image = models.ImageField(default='default_profile_picture.jpg',
                                 upload_to='profile_pics')
 
     def __str__(self):

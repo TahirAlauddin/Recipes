@@ -36,13 +36,20 @@ class Ingredient:
     name: str
     unit: str
     quantity: str
+    image: str
     
 
 @dataclass
 class Utensil:
     name: str
     quantity: str
+    image: str
     
+
+@dataclass
+class RecipeImage:
+    image: bytes
+
 
 @dataclass
 class Recipe:
@@ -56,6 +63,7 @@ class Recipe:
     num_of_dishes: int
     ingredients: List[Ingredient]
     utensils: List[Utensil]
+    recipe_image: RecipeImage
 
 
 def str_to_time(prep_time, rest_time, cook_time):
@@ -143,12 +151,63 @@ def scrape_marmiton(url, deepness):
 
     time,difficulty,cost = soup.findAll('p', attrs={'class': "RCP__sc-1qnswg8-1 iDYkZP"})
 
-    # Scrape picture of Recipe
-    # TODO: Might wanna add this functionality to the scrapper
-    # picture_of_recipe = soup.find('img', attrs={'class': "SHRD__sc-dy77ha-0 vKBPb"})
-    # picture_link = picture_of_recipe['href']
-    # response = requests.get(picture_link)
-    # picture_data = response.content
+
+    #? Scrape picture of Recipe
+    try:
+        picture_of_recipe = soup.find('picture')
+        picture_of_recipe = picture_of_recipe.find('source')
+
+        picture_link = picture_of_recipe['srcset']
+        picture_link = picture_link.split(',')[-1].split()[0]
+        if not picture_link.startswith('http'):
+            picture_link = url + picture_link
+
+        response = requests.get(picture_link)
+        recipe_picture_data = response.content
+    except TypeError:
+        # Picture not found
+        with open('default_recipe.jpg', 'rb') as default_pic:
+            recipe_picture_data = default_pic.read()
+
+    #? Scrape Ingredients Picture
+    ingredient_images = []
+    pictures_of_ingredient = soup.findAll('div', attrs={'class': "RCP__sc-vgpd2s-2 fNmocT"})
+    # picture_of_ingredient = picture_of_ingredient('picture', attrs={'class': ''})
+    for picture_of_ingredient in pictures_of_ingredient:
+        picture_of_ingredient = picture_of_ingredient.find('source')
+        try:
+            ingredient_picture_link = picture_of_ingredient['srcset']
+            ingredient_picture_link = ingredient_picture_link.split(',')[-1].split()[0]
+            if not ingredient_picture_link.startswith('http'):
+                ingredient_picture_link = url + ingredient_picture_link
+
+            print("Ingredient picture link:", ingredient_picture_link)
+
+            ingredient_images.append(ingredient_picture_link)
+        except TypeError:
+            # Picture not found
+            ingredient_images.append("default")
+
+
+    #? Scrape Utensils Picture
+    utensil_images = []
+    pictures_of_utensil = soup.findAll('div', attrs={'class': "RCP__sc-1641h7i-5 fQNUFo"})
+    # picture_of_utensil = picture_of_utensil('picture', attrs={'class': ''})
+    for picture_of_utensil in pictures_of_utensil:
+        picture_of_utensil = picture_of_utensil.find('source')
+
+        try:
+            utensil_picture_link = picture_of_utensil['srcset']
+            utensil_picture_link = utensil_picture_link.split(',')[-1].split()[0]
+            if not utensil_picture_link.startswith('http'):
+                utensil_picture_link = url + utensil_picture_link
+
+            print("Utensil picture link:", utensil_picture_link)
+            utensil_images.append(utensil_picture_link)
+        except TypeError:
+            # Picture not found
+            utensil_images.append("default")
+
 
     try:
         num_of_dishes = soup.find('span', attrs={'class': "SHRD__sc-w4kph7-4 hYSrSW"})
@@ -165,9 +224,10 @@ def scrape_marmiton(url, deepness):
     prep_time, rest_time, cook_time = times[1:]
 
 
-    # converting string time to time object python
+    #? Converting string time to time object python
     prep_time, rest_time, cook_time = str_to_time(prep_time, rest_time, cook_time)
 
+    #? Get the actual text from difficulty, cost and title_recipe in HTML
     difficulty = difficulty.getText()
     cost = cost.getText()
     title_recipe = soup.find('title').getText()
@@ -183,8 +243,9 @@ def scrape_marmiton(url, deepness):
 
 
     # Adding ingredients to database if not exists
-    for ingredient_name, ingredient_quantity_and_unit in zip(ingredients_name_soup,
-                                                         ingredients_for_recipes):
+    for ingredient_name, ingredient_quantity_and_unit, ingredient_image in zip(ingredients_name_soup,
+                                                         ingredients_for_recipes,
+                                                         ingredient_images):
         ingredient_name = ingredient_name.getText(strip=True).strip()
         qty_unit_text = ingredient_quantity_and_unit.getText(strip=True).strip()
 
@@ -205,13 +266,15 @@ def scrape_marmiton(url, deepness):
                 break
 
         if ingredient_name not in ingredients_names:
-            ingredient_object = Ingredient(name=ingredient_name, unit=unit, quantity=quantity)
+
+            ingredient_object = Ingredient(name=ingredient_name, unit=unit, quantity=quantity,
+                                            image=ingredient_image)
             ingredient_objects.append(ingredient_object)
             ingredients_names.append(ingredient_name)
 
 
     # Adding utensils to the database if not exists
-    for utensil in utensils_soup:
+    for utensil, utensil_image in zip(utensils_soup, utensil_images):
         # Utensils names 
         utensil_text = " ".join(utensil.getText().strip().split('\xa0'))
         utensil_name = "".join([chr for chr in utensil_text if chr.isalpha()])
@@ -219,7 +282,8 @@ def scrape_marmiton(url, deepness):
 
         recipe_utensil_names.append(utensil_name)
         if utensil_name not in utensil_names:
-            utensil_object = Utensil(name=utensil_name, quantity=quantity)
+            utensil_object = Utensil(name=utensil_name, quantity=quantity,
+                                    image=utensil_image)
             utensil_objects.append(utensil_object)
             utensil_names.append(utensil_name)
 
@@ -258,12 +322,18 @@ def scrape_marmiton(url, deepness):
                         rest_time=rest_time, difficulty=difficulty,
                         cost=cost, description=description_and_steps, 
                         ingredients=recipe_ingredients, utensils=recipe_utensils,
-                        num_of_dishes=num_of_dishes)
+                        num_of_dishes=num_of_dishes, recipe_image=None)
+
+        if recipe_picture_data:
+            recipeImage = RecipeImage(image=recipe_picture_data)
+            recipe.recipe_image = recipeImage
+
 
         recipes_list.append(recipe)
         titles.append(title_recipe)
         scrapped += 1
         print(f"{scrapped} Recipe added")
+
 
 
 def print_results():
@@ -288,29 +358,28 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         
         main()
-        ingredients = []
-        utensils = []
+        ingredients = {}
+        utensils = {}
 
-        for i in ingredient_objects:
-            name = i.name.lower()
-            if name not in ingredients:
-                ingredients.append(name)
+        for ingredient_object in ingredient_objects:
+            name = ingredient_object.name.lower()
+            if name not in ingredients.keys():
+                ingredients[name] = ingredient_object.image
 
-        for i in utensil_objects:
-            name = i.name
-            if name not in utensils:
-                utensils.append(name)
+        for utensil_object in utensil_objects:
+            name = utensil_object.name
+            if name not in utensils.keys():
+                utensils[name] = utensil_object.image
 
         if not os.path.exists('pickle'):
             os.mkdir('pickle')
 
-        for ingredient in ingredients:
-            print(ingredient)
 
         # Save to pickel files
         dump(recipes_list, open("pickle/recipes.pkl", 'wb'))
         dump(ingredients, open("pickle/ingredients.pkl", 'wb'))
         dump(utensils, open("pickle/utensils.pkl", 'wb'))
+
 
         self.stdout.write(self.style.SUCCESS("Recipes scrapped successfully."))
 
