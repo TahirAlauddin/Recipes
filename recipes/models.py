@@ -1,15 +1,18 @@
-from django.db import models
-from django.core.files import File
 from django.utils.translation import gettext_lazy as _
 from django.utils.text import slugify
-from django.conf import settings
+from django.db import models
 from django.db.utils import IntegrityError
+from django.core.files import File
+from django.conf import settings
+from django.contrib.auth import get_user_model
+
 from datetime import time, timedelta
 from miscellenous.models import Category
 from .utils import *
 import os, urllib.request
 
 
+User = get_user_model()
 
 class Ingredient(models.Model):
     """"
@@ -34,27 +37,24 @@ class Ingredient(models.Model):
         """ Overriding save method of models.Model to save
         the images from #marmiton for each ingredient using
         the url scrapped in scrape-recipes command """
-        
-        try:
-            img_url = kwargs.pop('img_url')
-        except KeyError:
-            return
-
-        image_filename = self.name.translate(str.maketrans('', '', PUNCTUATION)) + '.jpg'
-        try:            
-            # image_url is a URL to the image which #marmiton is using
-            result = urllib.request.urlretrieve(img_url) 
-        except:
-            return
-
-        # self.photo is the ImageField
-        self.image.save(
-            os.path.join(image_filename),
-            File(open(result[0], 'rb'))
-            )
-            
+              
         super(Ingredient, self).save(*args, **kwargs)
+
+
+    def save_image(self):
+        image_filename = slugify(self.name)
+        if len(image_filename) > 100:
+            image_filename = image_filename[:100]
+        image_filename += '.jpg'
         
+        image_path = os.path.join(settings.MEDIA_ROOT, "ingredients",
+                                    image_filename)
+        #? Saving the image to database
+        self.image.save(
+            image_filename,
+            File(open(image_path, 'rb'))
+            )
+       
 
     def __str__(self):
         """ String Representation of the object of Ingredient """
@@ -90,26 +90,22 @@ class Utensil(models.Model):
         """ Overriding save method of models.Model to save
         the images from #marmiton for each utensil using
         the url scrapped in scrape-recipes command """
-        try:
-            img_url = kwargs.pop('img_url', None)
-        except KeyError:
-            return
-        
-        image_filename = self.name.translate(str.maketrans('', '', PUNCTUATION)) + '.jpg'
-            
-        try:
-            # image_url is a URL to the image which #marmiton is using
-            result = urllib.request.urlretrieve(img_url) 
-        except:
-            return
-
-        # self.photo is the ImageField
-        self.image.save(
-            os.path.join(image_filename),
-            File(open(result[0], 'rb'))
-            )
 
         super(Utensil, self).save(*args, **kwargs)
+        
+    def save_image(self):
+        image_filename = slugify(self.name)
+        if len(image_filename) > 100:
+            image_filename = image_filename[:100]
+        image_filename += '.jpg'
+        image_path = os.path.join(settings.MEDIA_ROOT, "utensils",
+                                    image_filename)
+        #? Saving the image to database
+        self.image.save(
+            image_filename,
+            File(open(image_path, 'rb'))
+            )
+ 
     
     def __str__(self):
         """ String Representation of the object of Utensil """
@@ -236,6 +232,10 @@ class Recipe(models.Model):
     num_of_dishes = models.IntegerField()
     approved = models.BooleanField(null=False, default=False)
     video_url = models.URLField(null=True, blank=True)
+    creator = models.ForeignKey(User, on_delete=models.CASCADE, null=False,
+                        related_name='recipes', default=1)
+                         #! DEFAULT value can give error in future if there is no
+                         #! CustomUser with id=1, so there must be a user with id=1
 
     def __str__(self):
         """ String representation of the Recipe class"""
@@ -307,7 +307,7 @@ class Recipe(models.Model):
                     picture.write(recipe.recipe_image.image)
 
                 #? Read the content of the file (Recipe Image) and create an
-                #? instance of RecipImage
+                #? instance of RecipeImage
                 recipeImageFile = File( open(f"media/recipe_images/{image_filename}", 'rb'))
                 recipeImage = RecipeImage(image= recipeImageFile )
                 recipeImage.recipe = self
@@ -348,7 +348,7 @@ class Recipe(models.Model):
             return os.path.join(settings.STATIC_URL, image.image.url)
         if self.category:
             return os.path.join(settings.MEDIA_URL, self.category.image.url)
-        return os.path.join(settings.STATIC_URL, 'img/default.jpg')
+        return os.path.join(settings.STATIC_URL, 'img', 'default.jpg')
 
     @property
     def get_difficulty(self):
@@ -362,7 +362,8 @@ class Recipe(models.Model):
         for cost in COST_CHOICES:
             if cost[0] == self.cost:
                 return cost[1]
+
     class Meta:
-        # ordering = ['title']
+        ordering = ['title']
         verbose_name = _('Recipe')
         verbose_name_plural = _('Recipes')

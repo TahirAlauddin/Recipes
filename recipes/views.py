@@ -1,6 +1,7 @@
-from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required, user_passes_test
+from django.shortcuts import render, redirect
 from django.contrib.auth import get_user_model
+from django.core.paginator import Paginator
 from django.contrib import messages 
 from django.http import JsonResponse
 from django.conf import settings
@@ -19,8 +20,16 @@ def staff_required(login_url=None):
 
 # Home Page/ Recipe List Page
 def view_home(request):
-    recipes = Recipe.objects.filter(approved=True).order_by('?')[:10]
-    context = {'recipes': recipes}
+    recipes = Recipe.objects.filter(approved=True)
+    if request.method == 'GET' and request.GET.get('q'):
+        q = request.GET.get('q')
+        recipes = recipes.filter(title__icontains=q)
+    paginator = Paginator(recipes, 9)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    is_paginated = page_obj.has_other_pages()
+
+    context = {'page_obj': page_obj, 'is_paginated': is_paginated}
     return render(request, "recipes/index.html", context)
 
 
@@ -113,7 +122,7 @@ def view_recipe_detail(request, slug):
     # recipe, Create a context and pass it to the template
     ingredients = recipe.ingredients.all()
     utensils = recipe.utensils.all()
-    reviews = recipe.reviews.all()
+    reviews = recipe.reviews.filter(is_approved=True)
     # Create a range object/iterator to help render exactly 
     # the number of stars as rating as recipe.average_rating 
     rating_count = range(int(recipe.average_rating))
@@ -144,7 +153,19 @@ def get_ingredients_quantity_api_view(request, slug, current_num_of_dishes):
 @staff_required(login_url=settings.LOGIN_URL)
 def view_non_approved_recipes(request):
     un_approved_recipes = Recipe.objects.filter(approved=False)
-    context = {'recipes': un_approved_recipes}
+
+    if request.method == 'GET' and request.GET.get('q'):
+        q = request.GET.get('q')
+        recipes = recipes.filter(title__icontains=q)
+        
+    paginator = Paginator(un_approved_recipes, 9)
+
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    is_paginated = page_obj.has_other_pages()
+    
+    context = {'page_obj': page_obj, 'is_paginated': is_paginated}
+
     return render(request, 'recipes/unapproved_recipes.html', context=context)
 
 

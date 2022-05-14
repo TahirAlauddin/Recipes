@@ -57,10 +57,15 @@ class RecipeAdmin(admin.ModelAdmin):
         return time
 
 
-
+class RecipeImageAdmin(admin.ModelAdmin):
+    model = RecipeImage
+    list_display = ('recipe',)
+    search_fields = ('recipe__title',)
+    
+    
 admin.site.register(Recipe, RecipeAdmin)
 admin.site.register(Ingredient, IngredientAdmin)
 admin.site.register(Utensil, UtensilAdmin)
-admin.site.register(RecipeImage)
+admin.site.register(RecipeImage, RecipeImageAdmin)
 admin.site.register(IngredientItem)
 admin.site.register(UtensilItem)

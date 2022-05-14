@@ -6,11 +6,6 @@ load_dotenv()
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
-
-# SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
@@ -65,6 +60,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'users.context_processors.add_social_media'
             ],
         },
     },
@@ -91,6 +87,11 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
+        # 'HOST': 'localhost',
+        # 'USER': 'root',
+        # 'PASSWORD': 'F4E1E02C',
+        # 'PORT': '3307',
+        # 'NAME': 'recipeApp'
     }
 }
 
@@ -113,7 +114,7 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 
-# Internationalization
+#? Internationalization
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'UTC'
 USE_I18N = True
@@ -121,7 +122,7 @@ USE_L10N = True
 USE_TZ = True
 
 
-# Static files (CSS, JavaScript, Images)
+#? Static files (CSS, JavaScript, Images)
 STATIC_URL = '/static/'
 STATIC_ROOT = "staticfiles"
 STATICFILES_DIRS = [
@@ -131,7 +132,7 @@ STATICFILES_DIRS = [
 
 AUTH_USER_MODEL = 'users.CustomUser'
 
-# Login/Logout Settings
+#? Login/Logout Settings
 LOGIN_REDIRECT_URL = 'home'
 LOGIN_URL = 'account_login'
 LOGOUT_REDIRECT_URL = 'account_login'
@@ -139,11 +140,11 @@ LOGOUT_URL = 'account_logout'
 
 DATE_INPUT_FORMATS = ['%d-%m-%Y']
 
-# Media Settings
+#? Media Settings
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 MEDIA_URL = '/media/'
 
-# DJANGO-AUTH SETTINGS
+#? DJANGO-AUTH SETTINGS
 ACCOUNT_ADAPTER = 'authentication.adapter.CustomUserAdapter'
 ACCOUNT_AUTHENTICATION_METHOD = 'email'
 ACCOUNT_EMAIL_REQUIRED = True
@@ -156,18 +157,24 @@ ACCOUNT_EMAIL_CONFIRMATION_AUTHENTICATED_REDIRECT_URL = LOGIN_REDIRECT_URL
 ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS = 1
 
 
-# PRIMARY KEY FOR DJANGO DATABASE
+#? PRIMARY KEY FOR DJANGO DATABASE
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
-# PROJECT Intrinsic settings
+#? PROJECT Intrinsic settings
 USER_CONFIRMATION_THROUGH_EMAIL = True
 
 
-# EMAIL CONFIGURATIONS
+#? EMAIL CONFIGURATIONS
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_USE_TLS = True
 EMAIL_PORT = 587
 EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER') # Put Email Address here
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD') # Put password here
+
+
+#? SOCIAL MEDIA Information
+FACEBOOK_URL = os.getenv('FACEBOOK_URL') or '#'
+TWITTER_URL = os.getenv('TWITTER_URL') or '#'
+INSTAGRAM_URL = os.getenv('INSTAGRAM_URL') or '#'

@@ -2,6 +2,7 @@ from django.shortcuts import redirect, render
 from django.contrib.auth import authenticate, get_user_model
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.db import IntegrityError
 import os, os.path
 
 # Get the User model, either Django's builtin User
@@ -31,6 +32,11 @@ def view_profile_update(request):
 
         # Update user attributes with the form data
         user = User.objects.get(id=request.user.id)
+        if username:
+            try:
+                user.username = username
+            except IntegrityError:
+                return redirect('profile')
         if birth_date:
             user.birth_date = birth_date
         if address:
@@ -43,6 +49,7 @@ def view_profile_update(request):
             user.country = country
         if gender:
             user.gender = gender
+
         if profile_picture:
             user.profile.image = profile_picture
             user.profile.save()

@@ -6,8 +6,10 @@ from typing import List, Any
 from pickle import dump
 from datetime import time
 from django.core.management import BaseCommand
+from django.conf import settings
 import requests
 import os
+
 
 url = 'https://marmiton.org'
 
@@ -37,15 +39,17 @@ class Ingredient:
     unit: str
     quantity: str
     image: str
-    
+    def __repr__(self):
+        return f"Ingredient(name={self.name}, unit={self.unit}, quantity={self.quantity})"
 
 @dataclass
 class Utensil:
     name: str
     quantity: str
     image: str
+    def __repr__(self):
+        return f"Ingredient(name={self.name}, quantity={self.quantity})"
     
-
 @dataclass
 class RecipeImage:
     image: bytes
@@ -65,6 +69,11 @@ class Recipe:
     utensils: List[Utensil]
     recipe_image: RecipeImage
 
+    def __repr__(self):
+        return f"Recipe(title={self.title}, prep_time={self.prep_time}, rest_time={self.rest_time}, \
+                        cook_time={self.cook_time}, difficulty={self.difficulty}, cost={self.cost},\
+                        description={self.description},num_of_dishes={self.num_of_dishes}, \
+                        ingredients={self.ingredients}, utensils={self.utensils} )"
 
 def str_to_time(prep_time, rest_time, cook_time):
 
@@ -164,9 +173,10 @@ def scrape_marmiton(url, deepness):
 
         response = requests.get(picture_link)
         recipe_picture_data = response.content
-    except TypeError:
+    except TypeError as e:
         # Picture not found
-        with open('default_recipe.jpg', 'rb') as default_pic:
+        print(e)
+        with open(os.path.join(settings.STATIC_ROOT, 'img', 'default_recipe.jpg'), 'rb') as default_pic:
             recipe_picture_data = default_pic.read()
 
     #? Scrape Ingredients Picture
@@ -181,12 +191,14 @@ def scrape_marmiton(url, deepness):
             if not ingredient_picture_link.startswith('http'):
                 ingredient_picture_link = url + ingredient_picture_link
 
-            print("Ingredient picture link:", ingredient_picture_link)
+            # print("Ingredient picture link:", ingredient_picture_link)
+            response = requests.get(ingredient_picture_link)
+            ingredient_image = response.content
 
-            ingredient_images.append(ingredient_picture_link)
+            ingredient_images.append(ingredient_image)
         except TypeError:
             # Picture not found
-            ingredient_images.append("default")
+            ingredient_images.append(None)
 
 
     #? Scrape Utensils Picture
@@ -202,11 +214,15 @@ def scrape_marmiton(url, deepness):
             if not utensil_picture_link.startswith('http'):
                 utensil_picture_link = url + utensil_picture_link
 
-            print("Utensil picture link:", utensil_picture_link)
-            utensil_images.append(utensil_picture_link)
+            # print("Utensil picture link:", utensil_picture_link)
+
+            response = requests.get(utensil_picture_link)
+            utensil_image = response.content
+
+            utensil_images.append(utensil_image)
         except TypeError:
             # Picture not found
-            utensil_images.append("default")
+            utensil_images.append(None)
 
 
     try:
@@ -232,6 +248,7 @@ def scrape_marmiton(url, deepness):
     cost = cost.getText()
     title_recipe = soup.find('title').getText()
 
+    print(title_recipe + picture_link + '\n\n')
 
     ingredients_for_recipes = soup.findAll('span', attrs={"class": "SHRD__sc-10plygc-0 epviYI"})    
     ingredients_name_soup = soup.findAll('span', attrs={'class': "SHRD__sc-10plygc-0 kWuxfa"})
@@ -273,12 +290,14 @@ def scrape_marmiton(url, deepness):
             ingredients_names.append(ingredient_name)
 
 
-    # Adding utensils to the database if not exists
+    #? Adding utensils to the database if not exists
     for utensil, utensil_image in zip(utensils_soup, utensil_images):
         # Utensils names 
         utensil_text = " ".join(utensil.getText().strip().split('\xa0'))
-        utensil_name = "".join([chr for chr in utensil_text if chr.isalpha()])
-        quantity = "".join([chr for chr in utensil_text if chr.isdigit()])
+
+        utensil_name = " ".join(utensil_text.split()[1:])
+        quantity = " ".join(utensil_text.split()[0])
+
 
         recipe_utensil_names.append(utensil_name)
         if utensil_name not in utensil_names:
@@ -374,12 +393,15 @@ class Command(BaseCommand):
         if not os.path.exists('pickle'):
             os.mkdir('pickle')
 
+        if SAVE_TO_PICKEL:
+            # Save to pickel files
+            dump(recipes_list, open("pickle/recipes.pkl", 'wb'))
+            dump(ingredients, open("pickle/ingredients.pkl", 'wb'))
+            dump(utensils, open("pickle/utensils.pkl", 'wb'))
 
-        # Save to pickel files
-        dump(recipes_list, open("pickle/recipes.pkl", 'wb'))
-        dump(ingredients, open("pickle/ingredients.pkl", 'wb'))
-        dump(utensils, open("pickle/utensils.pkl", 'wb'))
 
+        if PRINT_RESULTS:
+            print_results()
 
         self.stdout.write(self.style.SUCCESS("Recipes scrapped successfully."))
 
@@ -418,3 +440,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+

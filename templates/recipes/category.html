@@ -20,7 +20,7 @@
             <div class="col-12 recipe-stack">
                 <div class="row mod py-5">
 
-                    {% for category in categories %}
+                    {% for category in page_obj %}
                     <div class="col-12 col-lg-4 item">
                         <a href="{% url 'category-detail' category.slug %}" style="text-decoration: none;">
                             <img src="{{category.image.url}}">
@@ -40,6 +40,7 @@
     </div>
 </section>
 
+{% include '../codeSnippets/pagination.html' %}
 
 {% include '../codeSnippets/footer.html' %}
 

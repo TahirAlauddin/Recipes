@@ -1,6 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
+from django.utils.deconstruct import deconstructible
 from django.utils import timezone
 from django.conf import settings
 from PIL import Image
@@ -51,6 +52,7 @@ class CustomUserManager(BaseUserManager):
         return user
 
 
+@deconstructible
 class CustomUser(AbstractBaseUser, PermissionsMixin):
     username = models.CharField(unique=True, max_length=255)
     email = models.EmailField(unique=True)

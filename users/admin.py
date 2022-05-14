@@ -14,33 +14,21 @@ class CustomUserAdminConfig(UserAdmin):
     list_display = ['email','username', 'is_staff', 'is_active']
     
     fieldsets = (
-        (None, {'fields':('email', 'username')}),
-        # ('Permissions', {'fields':('is_staff', 'is_active', 
-        #                 'is_superuser', 'groups', 'user_permissions')}),
+        (None, {'fields':('email', 'username', )}),
+        ('Permissions', {'fields':('is_staff', 'is_active', )}),
         ('Personal', {'fields':('gender', 'postal_code',
                                 'address', 'city', 'country')}),
         ('Important Dates', {'fields':('created_since', 'birth_date')})
     )
 
     add_fieldsets = (
-        (None, {'fields':('email', 'username')}),
-        # ('Permissions', {'fields':('is_staff', 'is_active', 
-        #                 'is_superuser', 'groups', 'user_permissions')}),
+        (None, {'fields':('email', 'username', 'password1', 'password2')}),
+        ('Permissions', {'fields':('is_staff', 'is_active',)}),
         ('Personal', {'fields':('gender', 'postal_code',
                                 'address', 'city', 'country')}),
         ('Important Dates', {'fields':('created_since', 'birth_date')})
     )
     
-    # add_fieldsets = (
-    #             (None, {
-    #         'classes': ('wide',),
-    #         'fields': ('email', 'username', 'postal_code',
-    #         'birth_date', 'address', 'city', 'country',
-    #         'password1', 'password2',
-    #         'is_active', 'is_staff')}
-    #     ),
-    # )
-        
         
 admin.site.register(CustomUser, CustomUserAdminConfig)
 admin.site.register(Profile)

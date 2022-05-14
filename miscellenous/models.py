@@ -66,6 +66,7 @@ class Review(models.Model):
     creation_date = models.DateTimeField(
         auto_now_add=True,
     )
+    is_approved = models.BooleanField(blank=False, null=False, default=False)
 
     def get_owner(self):
         """Returns the owner who wrote this review or ``Anonymous``."""
